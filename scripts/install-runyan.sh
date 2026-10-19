@@ -14,7 +14,10 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 DEST="$HOME/Library/Input Methods"
 APP="$DEST/Runyan.app"
 
-bash "$ROOT/scripts/build-app.sh"
+if ! bash "$ROOT/scripts/build-app.sh"; then
+  echo "==> Xcode 构建不可用（xcodebuild 解析依赖需要嵌套沙箱），改走 SwiftPM 路径"
+  bash "$ROOT/scripts/build-app-swiftpm.sh"
+fi
 
 echo "==> 停止旧进程"
 pkill -f "Input Methods/Runyan.app/Contents/MacOS/Runyan" 2>/dev/null || true
