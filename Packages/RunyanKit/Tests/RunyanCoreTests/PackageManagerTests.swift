@@ -160,13 +160,14 @@ private actor PackageFileDownloadStub {
 
 extension PackageManagerTests {
     @Test func immutableModelAssetIsPinnedAndUsesBinaryAcceptHeader() throws {
-        // Upstream replaces LTS assets in place, so the registry pins Runyan's own copy.
+        // 上游会原地替换 LTS 资产，所以这里直接取上游发布的固定版本，
+        // 安装前仍按 registry 里记录的 SHA-256 校验。
         let pkg = try #require(DictionaryRegistry.bundled.package("wanxiang-lts-zh-hans"))
         #expect(pkg.kind == .model && pkg.schemas.isEmpty)
         #expect(pkg.source.type == "raw" && pkg.version == "LTS-2026-10-06")
         #expect(pkg.size == 398309420)
         #expect(pkg.sha256 == "c330bca73a4102b097fd6b239e6d10097a41995864f13004dec06e8cec98f2cc")
-        #expect(pkg.source.downloadURL?.absoluteString == "https://assets.example.com/runyan/models/wanxiang-lts-zh-hans/\(pkg.sha256)/wanxiang-lts-zh-hans.gram")
+        #expect(pkg.source.downloadURL?.absoluteString == "https://github.com/amzxyz/RIME-LMDG/releases/download/LTS/wanxiang-lts-zh-hans.gram")
         #expect(pkg.source.filename == "wanxiang-lts-zh-hans.gram")
         #expect(pkg.license == "CC-BY-4.0" && pkg.attribution?.isEmpty == false)
 

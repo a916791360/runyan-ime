@@ -139,10 +139,10 @@ struct SubscriptionTests {
         let data = try Data(contentsOf: repo.appendingPathComponent("SharedSupport/runyan/vocabulary-catalog.json"))
         let catalog = try JSONDecoder().decode(VocabularyCatalog.self, from: data)
         #expect(catalog.feeds.count >= 3)
-        // Official feeds come from the website, each pinned to a version and SHA-256.
-        #expect(catalog.feeds.allSatisfy { $0.url.host == "runyan.example.com" && $0.url.path.hasPrefix("/resources/") })
+        // 官方词库随仓库发布在 assets/dictionaries 下，每条都带版本号与 SHA-256。
+        #expect(catalog.feeds.allSatisfy { $0.url.host == "raw.githubusercontent.com" && $0.url.path.contains("/assets/dictionaries/") })
         #expect(catalog.feeds.allSatisfy { $0.sha256?.count == 64 && $0.version != nil && ($0.entries ?? 0) > 0 })
-        #expect(catalog.homepage?.absoluteString == "https://runyan.example.com/dictionaries/")
+        #expect(catalog.homepage?.absoluteString == "https://raw.githubusercontent.com/a916791360/runyan-ime/main/assets/dictionaries/")
         #expect(VocabularyCatalog.remoteURL.absoluteString == "https://raw.githubusercontent.com/a916791360/runyan-ime/main/assets/vocabulary-catalog.json")
     }
 }

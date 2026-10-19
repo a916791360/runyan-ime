@@ -208,6 +208,9 @@ public struct AppUpdateChecker: Sendable {
     public var session: URLSession
     var verificationKey = manifestPublicKey
     private var usesStoredChannel: Bool
+    /// 实例级开关，默认跟随 `updatesConfigured`。
+    /// 个人开发版整体是关的（不发任何网络请求）；测试会把它打开来验证清单解析与签名校验。
+    public var enabled = AppUpdateChecker.updatesConfigured
 
     public static func manifestURL(receiveBeta: Bool) -> URL {
         downloadBase.appendingPathComponent(product).appendingPathComponent(receiveBeta ? "latest-beta.json" : "latest.json")
@@ -246,7 +249,7 @@ public struct AppUpdateChecker: Sendable {
     /// Checks once, records the result in `state` and returns the release when newer.
     @discardableResult
     public func check(paths: RunyanPaths, current: AppVersion, now: Date = Date()) async throws -> AppRelease? {
-        guard Self.updatesConfigured else { return nil }
+        guard enabled else { return nil }
         let initial = AppUpdateState.load(paths)
         var checker = self
         if usesStoredChannel { checker.manifestURL = initial.manifestURL }

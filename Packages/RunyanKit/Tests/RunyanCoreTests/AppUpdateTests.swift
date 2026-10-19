@@ -98,7 +98,7 @@ import Testing
             1. Developer ID Installer: Yang Ran (Q59TY2JNAM)
         """
         #expect(AppUpdateChecker.isTrusted(pkgutilOutput: signed))
-        #expect(!AppUpdateChecker.isTrusted(pkgutilOutput: signed.replacingOccurrences(of: "PX694P4CGY", with: "ABCDEFGHIJ")))
+        #expect(!AppUpdateChecker.isTrusted(pkgutilOutput: signed.replacingOccurrences(of: "Q59TY2JNAM", with: "ABCDEFGHIJ")))
         #expect(!AppUpdateChecker.isTrusted(pkgutilOutput: "Package \"x.pkg\":\n   Status: no signature"))
     }
 }
@@ -169,6 +169,7 @@ final class StubProtocol: URLProtocol, @unchecked Sendable {
         let key = Curve25519.Signing.PrivateKey()
         var checker = AppUpdateChecker(session: session)
         checker.verificationKey = key.publicKey.rawRepresentation.base64EncodedString()
+        checker.enabled = true  // 发布通道默认关闭，这里显式打开来验证逻辑
         let beta = Data(#"{"product":"runyan","version":"0.2.0-beta.2","prerelease":false,"files":{}}"#.utf8)
         let signature = try key.signature(for: beta).base64EncodedString()
         var state = AppUpdateState()
@@ -199,6 +200,7 @@ final class StubProtocol: URLProtocol, @unchecked Sendable {
         let key = Curve25519.Signing.PrivateKey()
         var checker = AppUpdateChecker(session: session)
         checker.verificationKey = key.publicKey.rawRepresentation.base64EncodedString()
+        checker.enabled = true  // 发布通道默认关闭，这里显式打开来验证逻辑
         let data = Data(#"{"product":"runyan","version":"0.2.0-beta.1","files":{}}"#.utf8)
         let url = state.manifestURL.absoluteString
         StubProtocol.responses = [url: (200, data), url + ".sig": (200, Data(try key.signature(for: data).base64EncodedString().utf8))]

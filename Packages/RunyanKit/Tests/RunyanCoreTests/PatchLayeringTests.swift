@@ -145,7 +145,8 @@ struct PatchLayeringTests {
         try fm.createDirectory(at: paths.stagingDir, withIntermediateDirectories: true)
         let untouched = paths.builtConfig("untouched.schema")
         try "schema: {}\n".write(to: untouched, atomically: true, encoding: .utf8)
-        let expected = ["runyan", "default"]
+        // prepareForDeploy 按 configID 字典序返回
+        let expected = ["default", "runyan"]
 
         // A failed deploy may leave partial output. Each retry must invalidate it,
         // even when the composed shims have not changed since the previous attempt.
