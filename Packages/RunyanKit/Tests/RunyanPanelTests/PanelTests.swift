@@ -28,7 +28,7 @@ struct PanelTests {
     @Test func resolvesLightAndDarkSchemes() {
         let light = PanelTheme(frontend: Self.frontend, dark: false)
         let dark = PanelTheme(frontend: Self.frontend, dark: true)
-        #expect(light.schemeName == "runyan_light")
+        #expect(light.schemeName == "dodger")
         #expect(dark.schemeName == "runyan_dark")
         #expect(light.layout == .linear)
         #expect(light.fontPoint == 17)
@@ -93,6 +93,8 @@ struct PanelTests {
 
     @MainActor @Test func numericBlueIsDrawnByActualCandidateView() throws {
         var frontend = Self.frontend
+        // 这个用例验证的是数字色值能不能画出来，不关心默认方案是哪个。
+        frontend.set("runyan_light", at: "style/color_scheme")
         frontend.set("argb", at: "preset_color_schemes/runyan_light/color_format")
         frontend.set(.int(0x007AFF), at: "preset_color_schemes/runyan_light/hilited_candidate_back_color")
         let view = CandidateView()

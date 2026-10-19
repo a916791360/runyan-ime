@@ -128,11 +128,6 @@ private struct SchemeGallery: View {
                     }
                 }
             }
-            Button {
-                model.customizeScheme(from: model.theme(dark: dark))
-            } label: {
-                Label("基于当前配色自定义…", systemImage: "slider.horizontal.3")
-            }
         }
         .padding(.vertical, 4)
     }

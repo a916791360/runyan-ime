@@ -123,6 +123,47 @@
     "dark": false
   },
   {
+    "id": "dodger",
+    "package": {
+      "format": "runyan-theme",
+      "version": 2,
+      "id": "dodger",
+      "name": "道奇蓝",
+      "author": "Runyan",
+      "colors": {
+        "back_color": "0xF5F5F5F4",
+        "border_color": "0x1A000000",
+        "preedit_back_color": "0x00000000",
+        "text_color": "0xFF57534E",
+        "hilited_text_color": "0xFF1C1917",
+        "hilited_back_color": "0x14000000",
+        "candidate_text_color": "0xFF292524",
+        "comment_text_color": "0xFFA8A29E",
+        "label_color": "0xFFA8A29E",
+        "hilited_candidate_back_color": "0xFF2F6AF5",
+        "hilited_candidate_text_color": "0xFFFFFFFF",
+        "hilited_comment_text_color": "0xFFE8EEFF",
+        "hilited_candidate_label_color": "0xFFE8EEFF"
+      },
+      "layout": {
+        "corner_radius": 10,
+        "hilited_corner_radius": 6,
+        "border_width": 7,
+        "border_height": 6,
+        "spacing": 8,
+        "line_spacing": 4,
+        "font_point": 17,
+        "label_font_point": 13,
+        "comment_font_point": 13
+      }
+    },
+    "canonical": "{\"author\":\"Runyan\",\"colors\":{\"back_color\":\"0xF5F5F5F4\",\"border_color\":\"0x1A000000\",\"candidate_text_color\":\"0xFF292524\",\"comment_text_color\":\"0xFFA8A29E\",\"hilited_back_color\":\"0x14000000\",\"hilited_candidate_back_color\":\"0xFF2F6AF5\",\"hilited_candidate_label_color\":\"0xFFE8EEFF\",\"hilited_candidate_text_color\":\"0xFFFFFFFF\",\"hilited_comment_text_color\":\"0xFFE8EEFF\",\"hilited_text_color\":\"0xFF1C1917\",\"label_color\":\"0xFFA8A29E\",\"preedit_back_color\":\"0x00000000\",\"text_color\":\"0xFF57534E\"},\"format\":\"runyan-theme\",\"id\":\"dodger\",\"layout\":{\"border_height\":6,\"border_width\":7,\"comment_font_point\":13,\"corner_radius\":10,\"font_point\":17,\"hilited_corner_radius\":6,\"label_font_point\":13,\"line_spacing\":4,\"spacing\":8},\"name\":\"道奇蓝\",\"version\":2}",
+    "d": "eyJhdXRob3IiOiJSdW55YW4iLCJjb2xvcnMiOnsiYmFja19jb2xvciI6IjB4RjVGNUY1RjQiLCJib3JkZXJfY29sb3IiOiIweDFBMDAwMDAwIiwiY2FuZGlkYXRlX3RleHRfY29sb3IiOiIweEZGMjkyNTI0IiwiY29tbWVudF90ZXh0X2NvbG9yIjoiMHhGRkE4QTI5RSIsImhpbGl0ZWRfYmFja19jb2xvciI6IjB4MTQwMDAwMDAiLCJoaWxpdGVkX2NhbmRpZGF0ZV9iYWNrX2NvbG9yIjoiMHhGRjJGNkFGNSIsImhpbGl0ZWRfY2FuZGlkYXRlX2xhYmVsX2NvbG9yIjoiMHhGRkU4RUVGRiIsImhpbGl0ZWRfY2FuZGlkYXRlX3RleHRfY29sb3IiOiIweEZGRkZGRkZGIiwiaGlsaXRlZF9jb21tZW50X3RleHRfY29sb3IiOiIweEZGRThFRUZGIiwiaGlsaXRlZF90ZXh0X2NvbG9yIjoiMHhGRjFDMTkxNyIsImxhYmVsX2NvbG9yIjoiMHhGRkE4QTI5RSIsInByZWVkaXRfYmFja19jb2xvciI6IjB4MDAwMDAwMDAiLCJ0ZXh0X2NvbG9yIjoiMHhGRjU3NTM0RSJ9LCJmb3JtYXQiOiJydW55YW4tdGhlbWUiLCJpZCI6ImRvZGdlciIsImxheW91dCI6eyJib3JkZXJfaGVpZ2h0Ijo2LCJib3JkZXJfd2lkdGgiOjcsImNvbW1lbnRfZm9udF9wb2ludCI6MTMsImNvcm5lcl9yYWRpdXMiOjEwLCJmb250X3BvaW50IjoxNywiaGlsaXRlZF9jb3JuZXJfcmFkaXVzIjo2LCJsYWJlbF9mb250X3BvaW50IjoxMywibGluZV9zcGFjaW5nIjo0LCJzcGFjaW5nIjo4fSwibmFtZSI6IumBk-Wlh-iTnSIsInZlcnNpb24iOjJ9",
+    "url": "runyan-ime://theme?v=2&d=eyJhdXRob3IiOiJSdW55YW4iLCJjb2xvcnMiOnsiYmFja19jb2xvciI6IjB4RjVGNUY1RjQiLCJib3JkZXJfY29sb3IiOiIweDFBMDAwMDAwIiwiY2FuZGlkYXRlX3RleHRfY29sb3IiOiIweEZGMjkyNTI0IiwiY29tbWVudF90ZXh0X2NvbG9yIjoiMHhGRkE4QTI5RSIsImhpbGl0ZWRfYmFja19jb2xvciI6IjB4MTQwMDAwMDAiLCJoaWxpdGVkX2NhbmRpZGF0ZV9iYWNrX2NvbG9yIjoiMHhGRjJGNkFGNSIsImhpbGl0ZWRfY2FuZGlkYXRlX2xhYmVsX2NvbG9yIjoiMHhGRkU4RUVGRiIsImhpbGl0ZWRfY2FuZGlkYXRlX3RleHRfY29sb3IiOiIweEZGRkZGRkZGIiwiaGlsaXRlZF9jb21tZW50X3RleHRfY29sb3IiOiIweEZGRThFRUZGIiwiaGlsaXRlZF90ZXh0X2NvbG9yIjoiMHhGRjFDMTkxNyIsImxhYmVsX2NvbG9yIjoiMHhGRkE4QTI5RSIsInByZWVkaXRfYmFja19jb2xvciI6IjB4MDAwMDAwMDAiLCJ0ZXh0X2NvbG9yIjoiMHhGRjU3NTM0RSJ9LCJmb3JtYXQiOiJydW55YW4tdGhlbWUiLCJpZCI6ImRvZGdlciIsImxheW91dCI6eyJib3JkZXJfaGVpZ2h0Ijo2LCJib3JkZXJfd2lkdGgiOjcsImNvbW1lbnRfZm9udF9wb2ludCI6MTMsImNvcm5lcl9yYWRpdXMiOjEwLCJmb250X3BvaW50IjoxNywiaGlsaXRlZF9jb3JuZXJfcmFkaXVzIjo2LCJsYWJlbF9mb250X3BvaW50IjoxMywibGluZV9zcGFjaW5nIjo0LCJzcGFjaW5nIjo4fSwibmFtZSI6IumBk-Wlh-iTnSIsInZlcnNpb24iOjJ9",
+    "min_contrast": 4.67,
+    "dark": false
+  },
+  {
     "id": "midnight",
     "package": {
       "format": "runyan-theme",

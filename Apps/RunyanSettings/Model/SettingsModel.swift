@@ -240,33 +240,6 @@ final class SettingsModel {
 
     static let customSchemeID = "runyan_custom"
 
-    /// Copies a scheme into the editable `runyan_custom` scheme and selects it.
-    func customizeScheme(from base: PanelTheme) {
-        let colors: [(String, ThemeColor)] = [
-            ("back_color", base.backColor), ("border_color", base.borderColor),
-            ("preedit_back_color", base.preeditBackColor), ("text_color", base.textColor),
-            ("hilited_text_color", base.hilitedTextColor), ("hilited_back_color", base.hilitedBackColor),
-            ("candidate_text_color", base.candidateTextColor), ("comment_text_color", base.commentTextColor),
-            ("label_color", base.labelColor), ("hilited_candidate_back_color", base.hilitedCandidateBackColor),
-            ("hilited_candidate_text_color", base.hilitedCandidateTextColor),
-            ("hilited_comment_text_color", base.hilitedCommentTextColor),
-            ("hilited_candidate_label_color", base.hilitedCandidateLabelColor),
-        ]
-        let scheme = ConfigValue.map(
-            [.init("name", "我的配色"), .init("author", "Runyan Settings"), .init("color_format", "argb")]
-                + colors.map { .init($0.0, .string($0.1.argbString)) }
-        )
-        perform {
-            try store.layers.updateGenerated(.frontend) { patch in
-                patch.removeAll { $0.key.hasPrefix("preset_color_schemes/\(Self.customSchemeID)") }
-                patch.append(.init("preset_color_schemes/\(Self.customSchemeID)", scheme))
-                patch.removeAll { $0.key == "style/color_scheme" || $0.key == "style/color_scheme_dark" }
-                patch.append(.init("style/color_scheme", .string(Self.customSchemeID)))
-                patch.append(.init("style/color_scheme_dark", .string(Self.customSchemeID)))
-            }
-        }
-    }
-
     // MARK: - Theme links (runyan-ime://theme, docs/themes.md)
 
     /// Links waiting for confirmation, shown one at a time.

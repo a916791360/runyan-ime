@@ -10,7 +10,7 @@ config_version: "0.1.0"
 show_notifications_when: appropriate
 
 style:
-  color_scheme: runyan_light
+  color_scheme: dodger
   color_scheme_dark: runyan_dark
   # stacked (one candidate per row) | linear (one row)
   candidate_list_layout: linear
@@ -128,6 +128,23 @@ preset_color_schemes:
     hilited_candidate_text_color: 0xFFFAFAF9
     hilited_comment_text_color: 0xFFD6D3D1
     hilited_candidate_label_color: 0xFFD6D3D1
+  dodger:
+    name: "道奇蓝"
+    author: Runyan
+    color_format: argb
+    # 石墨的中性底色，只把选中块换成道奇蓝 #2F6AF5
+    back_color: 0xF5F5F5F4
+    border_color: 0x1A000000
+    text_color: 0xFF57534E
+    hilited_text_color: 0xFF1C1917
+    hilited_back_color: 0x14000000
+    candidate_text_color: 0xFF292524
+    comment_text_color: 0xFFA8A29E
+    label_color: 0xFFA8A29E
+    hilited_candidate_back_color: 0xFF2F6AF5
+    hilited_candidate_text_color: 0xFFFFFFFF
+    hilited_comment_text_color: 0xFFE8EEFF
+    hilited_candidate_label_color: 0xFFE8EEFF
   midnight:
     name: "午夜"
     author: Runyan

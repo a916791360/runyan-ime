@@ -15,7 +15,7 @@ import Testing
 
     @Test func matchesTheSharedFixturesByteForByte() throws {
         let cases: [ValidCase] = try Self.load("valid.json")
-        #expect(cases.count == 10)
+        #expect(cases.count == 11)
         for item in cases {
             let decoded = try ThemePackage.decode(url: URL(string: item.url)!)
             #expect(decoded.ignoredKeys.isEmpty)
