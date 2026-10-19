@@ -102,10 +102,9 @@ targets:
   Runyan Settings:
     type: application
     platform: macOS
-    productName: 润言设置
+    productName: Runyan Settings
     sources:
       - path: Apps/RunyanSettings
-        excludes: [".impeccable"]
       - path: Apps/Shared
     dependencies:
       - package: RunyanKit

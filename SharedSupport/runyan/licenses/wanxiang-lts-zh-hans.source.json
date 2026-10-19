@@ -4,7 +4,7 @@
   "releaseTag": "LTS",
   "assetID": 616996347,
   "assetName": "wanxiang-lts-zh-hans.gram",
-  "downloadURL": "https://raw.githubusercontent.com/a916791360/runyan-ime/main/assets/models/wanxiang-lts-zh-hans/c330bca73a4102b097fd6b239e6d10097a41995864f13004dec06e8cec98f2cc/wanxiang-lts-zh-hans.gram",
+  "downloadURL": "https://github.com/amzxyz/RIME-LMDG/releases/download/LTS/wanxiang-lts-zh-hans.gram",
   "sha256": "c330bca73a4102b097fd6b239e6d10097a41995864f13004dec06e8cec98f2cc",
   "size": 398309420,
   "license": "CC-BY-4.0",
@@ -19,5 +19,5 @@
   "verifiedOn": "2026-10-07",
   "releasePublished": "2026-10-06T23:56:46Z",
   "upstreamDownloadURL": "https://github.com/amzxyz/RIME-LMDG/releases/download/LTS/wanxiang-lts-zh-hans.gram",
-  "mirror": "Unmodified copy pinned in this repository ('assets/models/'); upstream replaces LTS assets in place, so Runyannyan pins this copy by SHA-256."
+  "mirror": "Fetched directly from the upstream release and verified against the pinned SHA-256 before installation."
 }

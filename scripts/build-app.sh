@@ -4,7 +4,7 @@
 #   Contents/Helpers/runyan                    CLI (+ its resource bundle)
 #   Contents/Applications/Runyan Settings.app  settings
 #   Contents/Frameworks/librime + rime-plugins, Contents/SharedSupport
-# Used by install-dev.sh and package.sh. Signs ad-hoc unless RUNYAN_SIGN_IDENTITY is set.
+# Used by install-dev.sh and install-runyan.sh. Signs ad-hoc unless RUNYAN_SIGN_IDENTITY is set.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"

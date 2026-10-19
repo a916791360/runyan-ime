@@ -243,7 +243,7 @@ struct ErrorBanner: View {
     }
 }
 
-/// Launch arguments used by screenshot automation (scripts/ui-shots.sh):
+/// Launch arguments used by screenshot automation:
 /// `--pane <id>` opens a pane, `--appearance light|dark` forces the appearance,
 /// `--import-theme-url <runyan-ime://theme…>` opens the theme import sheet.
 enum LaunchOptions {

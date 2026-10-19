@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 # Builds Runyan and installs it for the current user into ~/Library/Input Methods,
-# then registers and enables the input source. For a system-wide install use the
-# package from scripts/package.sh.
+# then registers and enables the input source.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"

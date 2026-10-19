@@ -18,8 +18,8 @@ let package = Package(
         .executable(name: "runyan", targets: ["runyan"]),
     ],
     dependencies: [
-        // 本机网络无法访问 github.com:443，改用 codeload 下载到 deps/ 后走本地路径。
-        // 上游原始声明保留在 Package.swift.upstream。
+        // 依赖以源码形式固定放在仓库根目录 deps/ 下，用本地路径引用：
+        // 构建不联网、版本可审计，CI 与离线机器行为一致。
         .package(path: "../../deps/Yams"),
         .package(path: "../../deps/swift-argument-parser"),
     ],

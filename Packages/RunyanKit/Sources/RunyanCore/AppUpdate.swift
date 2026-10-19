@@ -200,8 +200,8 @@ public struct AppUpdateChecker: Sendable {
     public static let product = "runyan"
     /// Team that signs Runyan installers; downloaded packages must carry this signature.
     public static let teamID = "Q59TY2JNAM"
-    /// Ed25519 key that signs latest.json (scripts/sign-manifest.swift); the manifest is
-    /// trusted only with a valid latest.json.sig, whatever host serves it.
+    /// Ed25519 公钥：用来验证 latest.json 的签名（latest.json.sig）。
+    /// 个人开发版没有发布通道，留空即可；将来上线时填入自己的公钥。
     public static let manifestPublicKey = ""
 
     public var manifestURL: URL
