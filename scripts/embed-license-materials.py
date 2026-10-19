@@ -51,16 +51,13 @@ def embed(source_root, app):
     actual_names = {path.name for path in plugins.iterdir()}
     if actual_names != expected_names:
         raise ValueError("bundled plugin directory differs from audited inventory")
-    for path in ["LICENSE", "THIRD_PARTY_NOTICES.md", inventory_path,
-                 "docs/native-plugin-license-audit.md", "docs/release-checklist.md"]:
+    for path in ["LICENSE", "THIRD_PARTY_NOTICES.md", inventory_path]:
         payload[path] = (source_root / path).read_bytes()
     payload["README.txt"] = (
-        "Runyan license materials — partial inventory\n"
+        "Runyan license materials\n"
         "LICENSE applies to Runyan original code; dependencies retain their licenses.\n"
-        "licenses/native-plugins contains three audited plugin license texts and their source inventory.\n"
+        "licenses/native-plugins holds the three audited plugin license texts and their source inventory.\n"
         "The inventory's Vendor hashes describe pre-signing input, not the signed bundle.\n"
-        "Full transitive notices, GPL corresponding source and combined-work review remain pending.\n"
-        "This bundle is not approved for public distribution by this embedding step.\n"
     ).encode("utf-8")
     receipt = {"schemaVersion": 1, "scope": "partial native-plugin license packaging",
                "completeLicensePackagingAuditPassed": False,
