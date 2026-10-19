@@ -46,10 +46,8 @@ struct OverviewView: View {
 
     private var heroCopy: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Image("BrandLockup")
-                .resizable().scaledToFit().frame(width: 240, height: 89)
-                .accessibilityLabel("Runyan 润言")
-            Text("中文常新，自在表达。")
+            BrandLockupView()
+            Text("打字时顺手把话说明白。")
                 .font(.title3.weight(.medium)).foregroundStyle(Theme.secondaryText)
             Text("可视化管理方案、外观与词库")
                 .font(.title3).foregroundStyle(Theme.secondaryText)

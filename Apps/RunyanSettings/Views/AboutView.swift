@@ -29,12 +29,8 @@ struct AboutView: View {
 
     private var brand: some View {
         VStack(spacing: 12) {
-            Image("BrandLockup")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 240, height: 89)
-                .accessibilityLabel("Runyan 润言")
-            Text("中文常新，自在表达。")
+            BrandLockupView(markSize: 68, titleSize: 34)
+            Text("打字时顺手把话说明白。")
                 .font(.title3)
                 .foregroundStyle(Theme.text)
             Text("基于 RIME 的开源 macOS 中文输入法。")
