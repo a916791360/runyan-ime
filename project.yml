@@ -59,7 +59,9 @@ targets:
         InputMethodConnectionName: app.runyan.inputmethod.zh_Connection
         InputMethodServerControllerClass: RunyanInputController
         InputMethodServerDelegateClass: RunyanInputController
-        tsInputMethodIconFileKey: RunyanMenu.png
+        # 菜单栏图标必须是「只有字形、没有底色」的模板图：系统会按菜单栏明暗给 alpha 染色。
+        # 一旦画了实心方块，整块会被染成白色，字反而糊在里面（就是之前那个「白底透字」）。
+        tsInputMethodIconFileKey: RunyanMenuTemplate.png
         tsInputMethodCharacterRepertoireKey: [Hans, Hant, Latn]
         TISInputSourceID: app.runyan.inputmethod.zh
         TICapsLockLanguageSwitchCapable: true
