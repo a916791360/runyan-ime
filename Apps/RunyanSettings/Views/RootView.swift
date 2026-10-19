@@ -94,14 +94,21 @@ struct RootView: View {
                             Label {
                                 Text(pane.title)
                             } icon: {
-                                Image(systemName: pane.symbol).foregroundStyle(selection == pane ? AnyShapeStyle(.white) : AnyShapeStyle(.secondary))
+                                Image(systemName: pane.symbol)
                             }
+                            .foregroundStyle(selection == pane ? AnyShapeStyle(Theme.onAccent) : AnyShapeStyle(.primary))
+                            .listRowBackground(
+                                RoundedRectangle(cornerRadius: 7, style: .continuous)
+                                    .fill(selection == pane ? Theme.accent : .clear)
+                                    .padding(.vertical, 1)
+                            )
                             .tag(pane)
                         }
                     }
                 }
             }
             .listStyle(.sidebar)
+            .tint(Theme.accent)
             .scrollContentBackground(.hidden)
             .background(Theme.sidebar)
             .navigationSplitViewColumnWidth(min: 200, ideal: 220, max: 280)

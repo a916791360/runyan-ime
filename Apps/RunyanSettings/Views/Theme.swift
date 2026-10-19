@@ -19,8 +19,7 @@ enum Theme {
     }
 
     // Surfaces are neutral, close to the system's own (a beige "paper" canvas read as
-    // yellow and dated); the brand lives in the accent: vermilion #B64032, ink #242321.
-    // Paper #F7F2E9 is kept for brand moments (onboarding, icon tiles), not for panes.
+    // yellow and dated); the brand lives in the accent: dodger blue #2F6AF5, ink #242321.
     /// Pane background.
     static let canvas = dynamic(light: (246/255, 246/255, 245/255), dark: (28/255, 28/255, 29/255))
     static let sidebar = dynamic(light: (239/255, 239/255, 238/255), dark: (22/255, 22/255, 23/255))
@@ -28,11 +27,10 @@ enum Theme {
     static let card = dynamic(light: (1, 1, 1), dark: (40/255, 40/255, 42/255))
     static let cardBorder = overlay(light: 0.08, dark: 0.09)
     static let divider = overlay(light: 0.06, dark: 0.07)
-    /// Fills (prominent buttons, toggles, selection). Dark mode is a touch lighter and still
-    /// carries white labels at ≥ 4.5:1.
-    static let accent = dynamic(light: (182/255, 64/255, 50/255), dark: (196/255, 80/255, 63/255))
-    /// Accent as text or icon on a surface: ≥ 4.5:1 on cards in both modes.
-    static let accentText = dynamic(light: (182/255, 64/255, 50/255), dark: (224/255, 117/255, 96/255))
+    /// Fills (prominent buttons, toggles, selection). 白字压在道奇蓝上 4.8:1，两种外观都够。
+    static let accent = dynamic(light: (47/255, 106/255, 245/255), dark: (47/255, 106/255, 245/255))
+    /// Accent as text or icon on a surface：浅色下直接用它（4.8:1），深色提亮到 5.9:1。
+    static let accentText = dynamic(light: (47/255, 106/255, 245/255), dark: (122/255, 164/255, 255/255))
     static let onAccent = Color.white
     static let text = dynamic(light: (36/255, 35/255, 33/255), dark: (242/255, 242/255, 240/255))
     static let secondaryText = dynamic(light: (107/255, 106/255, 103/255), dark: (163/255, 163/255, 160/255))
