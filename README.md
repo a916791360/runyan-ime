@@ -1,5 +1,8 @@
 # 润言 · Runyan
 
+[![CI](https://github.com/a916791360/runyan-ime/actions/workflows/ci.yml/badge.svg)](https://github.com/a916791360/runyan-ime/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 **打字时顺手把话说明白。** 一个 macOS 中文输入法：拼音输入在本机完成，AI 只在你按下快捷键的那一刻介入，把刚打出的那句话改得更得体——不打断思路，也不改变你的语气。
 
 > 个人项目，作者 [@a916791360](https://github.com/a916791360)。拼音引擎基于开源项目 [librime](https://github.com/rime/librime)，产品设计、交互与工程实现由本仓库维护。
