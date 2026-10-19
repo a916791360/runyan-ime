@@ -1,0 +1,306 @@
+import RunyanCore
+import RunyanPanel
+import SwiftUI
+import UniformTypeIdentifiers
+
+struct OverviewView: View {
+    @Environment(SettingsModel.self) private var model
+    @Environment(\.colorScheme) private var colorScheme
+    @Binding var selection: Pane?
+    @State private var showingImport = false
+
+    var body: some View {
+        PaneColumn {
+            VStack(alignment: .leading, spacing: 20) {
+                hero
+                if model.pendingUpdate != nil { UpdateCard() }
+                statusGrid
+                importCard
+                quickLinks
+                VersionFooter().id("version")
+            }
+        }
+        .task { await model.refreshUpdates() }
+        .scrollTargetForScreenshots()
+    }
+
+    private var hero: some View {
+        // Side by side when there is room; the preview drops below the copy otherwise,
+        // so the text column is never squeezed into a few characters per line.
+        ViewThatFits(in: .horizontal) {
+            HStack(alignment: .center, spacing: 28) {
+                heroCopy
+                Spacer(minLength: 12)
+                heroPreview
+            }
+            VStack(alignment: .leading, spacing: 20) {
+                heroCopy
+                heroPreview
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(24)
+        .background(Theme.card, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(Theme.cardBorder))
+    }
+
+    private var heroCopy: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Image("BrandLockup")
+                .resizable().scaledToFit().frame(width: 240, height: 89)
+                .accessibilityLabel("Runyan 润言")
+            Text("中文常新，自在表达。")
+                .font(.title3.weight(.medium)).foregroundStyle(Theme.secondaryText)
+            Text("可视化管理方案、外观与词库")
+                .font(.title3).foregroundStyle(Theme.secondaryText)
+            HStack(spacing: 8) {
+                Tag(text: "librime 1.17", symbol: "cpu")
+                Tag(text: model.enabledSchemas.first.map { "主方案 \($0)" } ?? "尚未部署", symbol: "character.book.closed")
+            }
+        }
+        .fixedSize()
+    }
+
+    private var heroPreview: some View {
+        PanelPreview(theme: model.theme(dark: colorScheme == .dark))
+            .fixedSize()
+            .shadow(color: .black.opacity(0.12), radius: 18, y: 8)
+    }
+
+    private var statusGrid: some View {
+        Grid(horizontalSpacing: 14, verticalSpacing: 14) {
+            GridRow {
+                let state = model.inputSourceState
+                StatusCard(
+                    title: "输入法",
+                    value: !model.isInstalled ? "未安装" : state == .ready ? "已启用" : state == .needsRelogin ? "还差一步" : "已安装",
+                    detail: !model.isInstalled ? "运行 scripts/install-dev.sh 或安装 pkg"
+                        : state == .ready ? "按 ⌃空格 切换到润言即可输入"
+                        : state == .needsRelogin ? "注销或重启一次 Mac，润言才会出现在输入法列表里"
+                        : "系统设置 › 键盘 › 输入法 中添加润言",
+                    symbol: "keyboard.badge.ellipsis", ok: model.isInstalled && state == .ready
+                )
+                StatusCard(
+                    title: "部署", value: model.isDeployed ? "已部署" : "等待首次部署",
+                    detail: model.hasPendingChanges ? "正在应用更改…" : "配置与输入法一致",
+                    symbol: "shippingbox", ok: model.isDeployed && !model.hasPendingChanges
+                )
+                StatusCard(
+                    title: "输入方案", value: "\(model.enabledSchemas.count) 个启用",
+                    detail: model.enabledSchemas.prefix(3).joined(separator: " · "),
+                    symbol: "character.book.closed", ok: !model.enabledSchemas.isEmpty
+                )
+            }
+        }
+    }
+
+    private var importCard: some View {
+        HStack(spacing: 16) {
+            Image(systemName: "square.and.arrow.down.on.square").font(.title).foregroundStyle(Theme.accentText)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(model.hasImported ? "重新导入 RIME 配置" : "导入 RIME 配置").font(.headline)
+                Text("一键导入鼠须管等 RIME 目录的方案、词库、全拼 / 双拼自定义短语与词频（只读，短语自动合并）。")
+                    .font(.callout).foregroundStyle(Theme.secondaryText)
+            }
+            Spacer()
+            Button(model.hasImported ? "重新导入…" : "导入…") { showingImport = true }
+                .buttonStyle(.borderedProminent)
+                .disabled(model.deployState == .deploying)
+        }
+        .padding(18)
+        .background(.background.secondary, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .sheet(isPresented: $showingImport) { ImportSheet() }
+        .task {
+            // Screenshot automation: scripts can open the sheet with --import-sheet.
+            if ProcessInfo.processInfo.arguments.contains("--import-sheet") {
+                try? await Task.sleep(for: .milliseconds(400))
+                showingImport = true
+            }
+        }
+    }
+
+    private var quickLinks: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("常用").font(.headline)
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 200), spacing: 12)], spacing: 12) {
+                ForEach([Pane.appearance, .schemas, .spelling, .dictionaries, .phrases, .ai]) { pane in
+                    Button { selection = pane } label: {
+                        HStack(spacing: 10) {
+                            Image(systemName: pane.symbol).frame(width: 22).foregroundStyle(Theme.accentText)
+                            Text(pane.title).foregroundStyle(.primary)
+                            Spacer()
+                            Image(systemName: "chevron.right").font(.caption).foregroundStyle(.tertiary)
+                        }
+                        .padding(14)
+                        .background(.background.secondary, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        .contentShape(RoundedRectangle(cornerRadius: 12))
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+    }
+}
+
+struct StatusCard: View {
+    let title: LocalizedStringKey
+    let value: String
+    let detail: String
+    let symbol: String
+    let ok: Bool
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Image(systemName: symbol).foregroundStyle(Theme.secondaryText)
+                Text(title).font(.subheadline).foregroundStyle(Theme.secondaryText)
+                Spacer()
+                Circle().fill(ok ? Color.green : Color.orange).frame(width: 8, height: 8)
+            }
+            Text(value).font(.title3.weight(.semibold))
+            Text(detail.isEmpty ? " " : detail).font(.caption).foregroundStyle(Theme.secondaryText).lineLimit(2)
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.background.secondary, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+}
+
+struct Tag: View {
+    let text: String
+    let symbol: String
+
+    var body: some View {
+        Label(text, systemImage: symbol)
+            .lineLimit(1)
+            .fixedSize()
+            .font(.caption.weight(.medium))
+            .padding(.horizontal, 10).padding(.vertical, 5)
+            .background(.thinMaterial, in: Capsule())
+    }
+}
+
+/// Shown on the overview when a newer release is available.
+struct UpdateCard: View {
+    @Environment(SettingsModel.self) private var model
+
+    var body: some View {
+        if let release = model.pendingUpdate {
+            HStack(alignment: .center, spacing: 16) {
+                Image(systemName: "arrow.down.circle.fill").font(.title).foregroundStyle(Theme.accentText)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("新版本 \(release.appVersion.description) 可以更新").font(.headline)
+                    Text(detail(release)).font(.callout).foregroundStyle(Theme.secondaryText)
+                    if let notes = release.notes, !notes.isEmpty {
+                        Text(notes).font(.callout).foregroundStyle(Theme.secondaryText).lineLimit(3)
+                    }
+                    if let progress = model.updateProgress {
+                        ProgressView(value: progress).frame(maxWidth: 260)
+                    } else if let notice = model.updateNotice {
+                        Text(notice).font(.caption).foregroundStyle(Theme.secondaryText)
+                    }
+                }
+                Spacer()
+                Button("跳过此版本") { model.skipUpdate() }
+                    .disabled(model.updateProgress != nil)
+                Button("下载并安装") { Task { await model.installUpdate() } }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(model.updateProgress != nil)
+            }
+            .padding(18)
+            .background(Theme.card, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(Theme.accent.opacity(0.45)))
+        }
+    }
+
+    private func detail(_ release: AppRelease) -> String {
+        var parts = ["当前 \(model.currentVersion.description)"]
+        if let date = release.date { parts.append("发布于 \(date)") }
+        if let size = release.installer?.size { parts.append(String(format: "%.1f MB", Double(size) / 1_000_000)) }
+        parts.append("下载后校验 SHA-256 与开发者签名，再交给系统安装器")
+        return parts.joined(separator: " · ")
+    }
+}
+
+/// Version, automatic checking and a manual check, at the bottom of the overview.
+struct VersionFooter: View {
+    @Environment(SettingsModel.self) private var model
+
+    @State private var exporting = false
+    @State private var exportNotice: String?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            // One row when it fits; the update controls wrap under the version otherwise.
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 12) {
+                    version
+                    Spacer(minLength: 12)
+                    updateControls
+                }
+                VStack(alignment: .leading, spacing: 8) {
+                    version
+                    HStack(spacing: 12) { updateControls }
+                }
+            }
+            HStack(spacing: 12) {
+                Button("导出诊断信息…") { exportDiagnostics() }
+                    .disabled(exporting)
+                    .controlSize(.small)
+                    .help(Diagnostics.disclosure)
+                if let exportNotice { Text(exportNotice).font(.caption).foregroundStyle(Theme.secondaryText) }
+            }
+        }
+        .padding(.top, 4)
+    }
+
+    private var version: some View {
+        HStack(spacing: 12) {
+            Text("润言 \(model.currentVersion.description)\(model.isDistributionBuild ? "" : " · 开发版")")
+                .font(.caption).foregroundStyle(Theme.secondaryText)
+            if let notice = model.updateNotice, model.pendingUpdate == nil {
+                Text(notice).font(.caption).foregroundStyle(Theme.secondaryText)
+            }
+        }
+        .fixedSize()
+    }
+
+    /// 尚未搭建发布通道时整块隐藏：润言当前是个人开发版，不做任何联网更新检查。
+    @ViewBuilder private var updateControls: some View {
+        if AppUpdateChecker.updatesConfigured {
+            Toggle("自动检查更新", isOn: Binding(get: { model.updateState.autoCheck }, set: { model.setAutoUpdate($0) }))
+                .toggleStyle(.checkbox).font(.caption)
+                .help("每天检查一次公开的版本清单，不发送任何输入内容")
+            Toggle("接收测试版", isOn: Binding(get: { model.updateState.receiveBeta }, set: { model.setReceiveBeta($0) }))
+                .toggleStyle(.checkbox).font(.caption)
+                .help("开启后检查测试版与正式版；关闭后只检查正式版")
+            Button {
+                Task { await model.checkForUpdates(userInitiated: true) }
+            } label: {
+                if model.updateChecking { ProgressView().controlSize(.small) } else { Text("检查更新") }
+            }
+            .controlSize(.small)
+            .disabled(model.updateChecking)
+        }
+    }
+
+    private func exportDiagnostics() {
+        let panel = NSSavePanel()
+        panel.allowedContentTypes = [.zip]
+        panel.nameFieldStringValue = Diagnostics.filename()
+        panel.message = Diagnostics.disclosure
+        panel.begin { response in
+            guard response == .OK, let destination = panel.url else { return }
+            exporting = true
+            exportNotice = nil
+            let report = Diagnostics(paths: model.paths)
+            Task {
+                do {
+                    try await Task.detached(priority: .utility) { try report.export(to: destination) }.value
+                    exportNotice = "诊断信息已导出"
+                } catch { exportNotice = "导出失败，请检查保存位置的写入权限" }
+                exporting = false
+            }
+        }
+    }
+}

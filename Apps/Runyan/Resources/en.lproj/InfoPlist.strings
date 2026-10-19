@@ -1,0 +1,4 @@
+"app.runyan.inputmethod.zh.hans" = "Runyan";
+"app.runyan.inputmethod.zh" = "Runyan · AI writing";
+CFBundleName = "Runyan";
+CFBundleDisplayName = "Runyan";

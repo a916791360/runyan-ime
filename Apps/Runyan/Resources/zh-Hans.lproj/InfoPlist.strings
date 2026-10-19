@@ -1,0 +1,8 @@
+/* 输入源名称
+   第一行显示 mode 的名字，第二行显示输入法本体的名字。
+   两者都只写「润言」会显示成重复的两行，所以后者带上功能描述。 */
+
+"app.runyan.inputmethod.zh.hans" = "润言";
+"app.runyan.inputmethod.zh" = "润言 · AI 润色输入法";
+CFBundleName = "润言";
+CFBundleDisplayName = "润言";

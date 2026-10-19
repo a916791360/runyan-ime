@@ -1,0 +1,158 @@
+name: Runyan
+options:
+  bundleIdPrefix: app.runyan
+  developmentLanguage: zh-Hans
+  deploymentTarget:
+    macOS: "26.0"
+  createIntermediateGroups: true
+  groupSortPosition: top
+settings:
+  base:
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    SWIFT_VERSION: "6.0"
+    SWIFT_STRICT_CONCURRENCY: complete
+    SWIFT_EMIT_LOC_STRINGS: YES
+    LOCALIZATION_PREFERS_STRING_CATALOGS: YES
+    ENABLE_USER_SCRIPT_SANDBOXING: NO
+    DEAD_CODE_STRIPPING: YES
+    ENABLE_HARDENED_RUNTIME: YES
+    CODE_SIGN_STYLE: Automatic
+    DEVELOPMENT_TEAM: Q59TY2JNAM
+    CODE_SIGN_IDENTITY: "-"
+    INFOPLIST_KEY_NSHumanReadableCopyright: "© 2026 杨冉 · 润言"
+  configs:
+    Debug:
+      CODE_SIGN_IDENTITY: Apple Development
+packages:
+  RunyanKit:
+    path: Packages/RunyanKit
+targets:
+  Runyan:
+    type: application
+    platform: macOS
+    productName: Runyan
+    sources:
+      - path: Apps/Runyan
+      - path: Apps/Shared
+    dependencies:
+      - package: RunyanKit
+        product: RimeKit
+      - package: RunyanKit
+        product: RunyanCore
+      - package: RunyanKit
+        product: RunyanPanel
+      - package: RunyanKit
+        product: RunyanAI
+      - sdk: InputMethodKit.framework
+      - sdk: Carbon.framework
+    info:
+      path: Apps/Runyan/Info.plist
+      properties:
+        CFBundleDisplayName: 润言
+        CFBundleName: Runyan
+        NSHumanReadableCopyright: "© 2026 杨冉 · 润言"
+        LSUIElement: true
+        LSBackgroundOnly: false
+        NSPrincipalClass: NSApplication
+        LSApplicationCategoryType: public.app-category.utilities
+        InputMethodConnectionName: app.runyan.inputmethod.zh_Connection
+        InputMethodServerControllerClass: RunyanInputController
+        InputMethodServerDelegateClass: RunyanInputController
+        tsInputMethodIconFileKey: RunyanMenu.png
+        tsInputMethodCharacterRepertoireKey: [Hans, Hant, Latn]
+        TISInputSourceID: app.runyan.inputmethod.zh
+        TICapsLockLanguageSwitchCapable: true
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        ComponentInputModeDict:
+          tsInputModeListKey:
+            app.runyan.inputmethod.zh.hans:
+              TISInputSourceID: app.runyan.inputmethod.zh.hans
+              TISIntendedLanguage: zh-Hans
+              tsInputModeScriptKey: smUnicodeScript
+              tsInputModeCharacterRepertoireKey: [Hans, Hant]
+              tsInputModeKeyEquivalentModifiersKey: 4608
+              tsInputModeMenuIconFileKey: RunyanMenu.png
+              tsInputModeAlternateMenuIconFileKey: RunyanMenu.png
+              tsInputModePaletteIconFileKey: RunyanMenu.png
+              tsInputModePrimaryInScriptKey: true
+              tsInputModeIsVisibleKey: true
+              tsInputModeDefaultStateKey: true
+          tsVisibleInputModeOrderedArrayKey: [app.runyan.inputmethod.zh.hans]
+    settings:
+      base:
+        PRODUCT_NAME: Runyan
+        PRODUCT_BUNDLE_IDENTIFIER: app.runyan.inputmethod.zh
+        RUNYAN_INFO_TEMPLATE: "$(SRCROOT)/Apps/Runyan/Info.plist"
+        INFOPLIST_FILE: "$(DERIVED_FILE_DIR)/RunyanInfo.plist"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/../Frameworks"
+        CODE_SIGN_ENTITLEMENTS: Apps/Runyan/Runyan.entitlements
+    preBuildScripts:
+      - name: Stamp build metadata
+        script: bash "$SRCROOT/scripts/stamp-build-metadata.sh"
+        inputFiles: ["$(RUNYAN_INFO_TEMPLATE)"]
+        outputFiles: ["$(DERIVED_FILE_DIR)/RunyanInfo.plist"]
+        basedOnDependencyAnalysis: false
+    postBuildScripts:
+      - name: Embed librime plugins and SharedSupport
+        script: bash "$SRCROOT/scripts/embed-runtime.sh"
+        basedOnDependencyAnalysis: false
+  Runyan Settings:
+    type: application
+    platform: macOS
+    productName: 润言设置
+    sources:
+      - path: Apps/RunyanSettings
+        excludes: [".impeccable"]
+      - path: Apps/Shared
+    dependencies:
+      - package: RunyanKit
+        product: RunyanCore
+      - package: RunyanKit
+        product: RunyanPanel
+      - package: RunyanKit
+        product: RunyanAI
+    info:
+      path: Apps/RunyanSettings/Info.plist
+      properties:
+        CFBundleDisplayName: 润言设置
+        CFBundleName: Runyan Settings
+        NSHumanReadableCopyright: "© 2026 杨冉 · 润言"
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        LSApplicationCategoryType: public.app-category.productivity
+        CFBundleURLTypes:
+          - CFBundleURLName: app.runyan.inputmethod.zh.settings
+            CFBundleURLSchemes: [runyan-ime]
+            CFBundleTypeRole: Viewer
+        NSPrincipalClass: NSApplication
+    settings:
+      base:
+        PRODUCT_NAME: Runyan Settings
+        PRODUCT_BUNDLE_IDENTIFIER: app.runyan.inputmethod.zh.settings
+        RUNYAN_INFO_TEMPLATE: "$(SRCROOT)/Apps/RunyanSettings/Info.plist"
+        INFOPLIST_FILE: "$(DERIVED_FILE_DIR)/RunyanInfo.plist"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        CODE_SIGN_ENTITLEMENTS: Apps/RunyanSettings/RunyanSettings.entitlements
+    preBuildScripts:
+      - name: Stamp build metadata
+        script: bash "$SRCROOT/scripts/stamp-build-metadata.sh"
+        inputFiles: ["$(RUNYAN_INFO_TEMPLATE)"]
+        outputFiles: ["$(DERIVED_FILE_DIR)/RunyanInfo.plist"]
+        basedOnDependencyAnalysis: false
+schemes:
+  Runyan:
+    build:
+      targets:
+        Runyan: all
+        Runyan Settings: all
+    run:
+      config: Debug
+  Runyan Settings:
+    build:
+      targets:
+        Runyan Settings: all
+    run:
+      config: Debug

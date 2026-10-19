@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-26
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check changelog
+        run: python3 -m unittest discover -s scripts/tests -p 'test_changelog.py' -v
+
+      - name: Set up build (Xcode, XcodeGen, librime, dictionaries)
+        uses: ./.github/actions/setup-build
+
+      - name: Build package and stage plugins
+        run: |
+          swift build --package-path Packages/RunyanKit
+          bash scripts/stage-plugins.sh
+
+      - name: Test package
+        run: swift test --package-path Packages/RunyanKit --no-parallel  # RimeEngine.shared is process-wide
+
+      - name: Build release CLI and stage plugins
+        run: |
+          swift build --package-path Packages/RunyanKit -c release --product runyan
+          # Release products have their own librime copy and need plugins beside it.
+          bash scripts/stage-plugins.sh
+
+      - name: Enforce benchmark latency
+        run: |
+          "$(swift build --package-path Packages/RunyanKit -c release --show-bin-path)/runyan" bench \
+            --user-dir "$RUNNER_TEMP/runyan-bench" \
+            --shared-dir build/SharedSupport \
+            --schema rime_ice --keys nihaoshijie --iterations 2000 --assert-p99-ms 5
+
+      - name: Validate dictionaries
+        run: swift scripts/build-dicts.swift --check
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Build unsigned app
+        run: xcodebuild -project Runyan.xcodeproj -scheme Runyan -configuration Release -derivedDataPath build/DerivedData CODE_SIGNING_ALLOWED=NO build
+
+      - name: Archive unsigned app
+        run: ditto -c -k --keepParent build/DerivedData/Build/Products/Release/Runyan.app Runyan-unsigned.zip
+
+      - name: Upload unsigned app
+        uses: actions/upload-artifact@v4
+        with:
+          name: Runyan-unsigned
+          path: Runyan-unsigned.zip
+          if-no-files-found: error
+          retention-days: 7
