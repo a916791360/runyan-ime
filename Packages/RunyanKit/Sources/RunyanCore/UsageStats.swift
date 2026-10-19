@@ -34,6 +34,10 @@ public struct RunyanFeatures: Sendable, Codable, Equatable {
     /// English punctuation by default (librime's `ascii_punct` switch). The state is
     /// shared by all apps: ⌃⇧3 in one app switches the others too (#10).
     public var asciiPunct = false
+    /// 中英文相邻时补一个空格（提交时看光标左右各一个字符再决定）。
+    public var cjkLatinSpacing = true
+    /// 打出左括号时自动补右括号，光标停在两个括号中间。
+    public var autoPairBrackets = true
 
     public struct AIAction: Sendable, Codable, Equatable, Identifiable {
         public var id: UUID
@@ -66,6 +70,8 @@ public struct RunyanFeatures: Sendable, Codable, Equatable {
         draftAutoCommit = try container.decodeIfPresent(Int.self, forKey: .draftAutoCommit) ?? defaults.draftAutoCommit
         traditional = try container.decodeIfPresent(Bool.self, forKey: .traditional) ?? defaults.traditional
         asciiPunct = try container.decodeIfPresent(Bool.self, forKey: .asciiPunct) ?? defaults.asciiPunct
+        cjkLatinSpacing = try container.decodeIfPresent(Bool.self, forKey: .cjkLatinSpacing) ?? defaults.cjkLatinSpacing
+        autoPairBrackets = try container.decodeIfPresent(Bool.self, forKey: .autoPairBrackets) ?? defaults.autoPairBrackets
     }
 
     public static let changedNotification = Notification.Name("app.runyan.ime.features")

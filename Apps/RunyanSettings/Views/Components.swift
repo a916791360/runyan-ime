@@ -1,6 +1,7 @@
 import RunyanCore
 import RunyanPanel
 import AppKit
+import ApplicationServices
 import SwiftUI
 
 /// Large page title with a one-line explanation, shared by every pane.
@@ -56,6 +57,7 @@ struct CatalogPane: View {
             if pane == .general {
                 ScriptSection()
                 PunctuationSection()
+                TextShapingSection()
             }
             if pane == .keys {
                 QuickMenuShortcutsSection()
@@ -144,6 +146,58 @@ private struct PunctuationSection: View {
             }
         } header: {
             Text("标点")
+        }
+    }
+}
+
+/// 中英混排的空格与成对符号。两条都在提交文字那一刻处理，不改写方案配置。
+private struct TextShapingSection: View {
+    @Environment(SettingsModel.self) private var model
+
+    private var pairedWithoutPermission: Bool {
+        model.features.autoPairBrackets && !AXIsProcessTrusted()
+    }
+
+    var body: some View {
+        Section {
+            Toggle(isOn: Binding(get: { model.features.cjkLatinSpacing },
+                                 set: { value in model.updateFeatures { $0.cjkLatinSpacing = value } })) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("中英文之间加空格")
+                    Text("打中文时夹进英文单词，前后各补一个空格；本来就是空格、或者标点挨着的地方不动。")
+                        .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            Toggle(isOn: Binding(get: { model.features.autoPairBrackets },
+                                 set: { value in model.updateFeatures { $0.autoPairBrackets = value } })) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("左括号自动补全")
+                    Text("打出「（」时自动补上「）」，光标停在两个括号中间。适用于（ 【 「 《 和引号。")
+                        .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            if pairedWithoutPermission {
+                HStack(alignment: .top, spacing: 10) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundStyle(.orange)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("同目录下的「辅助功能」权限还没给")
+                            .font(.callout.weight(.medium))
+                        Text("输入框不提供移动光标的方法，只能补发一个左方向键把光标退到括号中间，这一步需要辅助功能权限。没授权时只输入左括号，不会出错。")
+                            .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                        Button("打开系统设置授权") {
+                            if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {
+                                NSWorkspace.shared.open(url)
+                            }
+                        }
+                        .controlSize(.small)
+                    }
+                }
+            }
+        } header: {
+            Text("中英混排")
+        } footer: {
+            Text("这两条只影响润言自己上屏的那一笔，不会去改已经写在输入框里的文字。")
         }
     }
 }

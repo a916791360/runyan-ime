@@ -432,7 +432,9 @@ final class RunyanInputController: IMKInputController {
         draftTimer?.cancel()
         guard !draft.isEmpty else { return }
         let text = draft.take()
-        (client ?? textClient)?.insertText(text, replacementRange: NSRange(location: NSNotFound, length: 0))
+        if let target = client ?? textClient {
+            commitText(text, client: target)
+        }
         hasMarkedText = false
         recentText.append(text)
         if ownsPanel, !isComposing, quickMenu == nil, polish == nil { engine.panel.hide() }
@@ -452,6 +454,44 @@ final class RunyanInputController: IMKInputController {
     }
 
     // MARK: - Output
+
+    /// 把文字送进输入框的唯一入口：先整形，再插入。
+    ///
+    /// 整形包括两件事，都靠光标左右各一个字符来判断：
+    ///   · 中英文挨在一起时补空格；
+    ///   · 打出左括号时补上右括号，然后把光标退一格。
+    func commitText(_ text: String, client: any IMKTextInput) {
+        let features = engine.features
+        let shaped = TextShaping.shape(
+            commit: text,
+            previous: previousCharacter(client),
+            next: nextCharacter(client),
+            spaceBetweenCJKAndLatin: features.cjkLatinSpacing,
+            autoPair: features.autoPairBrackets,
+            allowPair: CaretMover.isTrusted
+        )
+        client.insertText(shaped.text, replacementRange: NSRange(location: NSNotFound, length: 0))
+        if shaped.caretBack > 0 { CaretMover.moveLeft(shaped.caretBack) }
+    }
+
+    /// 光标左边那个字符。有选区、或者在拼字（marked text）时返回 nil：
+    /// 那两种情况下光标位置不代表「上一个上屏的字」。
+    private func previousCharacter(_ client: any IMKTextInput) -> Character? {
+        guard !hasMarkedText, let caret = caretLocation(client), caret > 0 else { return nil }
+        return client.attributedSubstring(from: NSRange(location: caret - 1, length: 1))?.string.first
+    }
+
+    private func nextCharacter(_ client: any IMKTextInput) -> Character? {
+        guard !hasMarkedText, let caret = caretLocation(client) else { return nil }
+        return client.attributedSubstring(from: NSRange(location: caret, length: 1))?.string.first
+    }
+
+    /// 无选区时的插入点；有选区说明用户要替换一段文字，不参与整形。
+    private func caretLocation(_ client: any IMKTextInput) -> Int? {
+        let selection = client.selectedRange()
+        guard selection.location != NSNotFound, selection.length == 0 else { return nil }
+        return selection.location
+    }
 
     /// Menu text replaces unconfirmed composition, after preserving an existing draft.
     /// Both continuous and closing insertions must leave no old preedit to restore.
@@ -508,7 +548,7 @@ final class RunyanInputController: IMKInputController {
             } else {
                 // The layer was switched off with a draft pending: it goes first.
                 let pending = draft.take()
-                client.insertText(pending + text, replacementRange: NSRange(location: NSNotFound, length: 0))
+                commitText(pending + text, client: client)
                 hasMarkedText = false
                 recentText.append(pending + text)
             }
