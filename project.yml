@@ -8,8 +8,8 @@ options:
   groupSortPosition: top
 settings:
   base:
-    MARKETING_VERSION: "0.1.1"
-    CURRENT_PROJECT_VERSION: "2"
+    MARKETING_VERSION: "0.1.2"
+    CURRENT_PROJECT_VERSION: "3"
     SWIFT_VERSION: "6.0"
     SWIFT_STRICT_CONCURRENCY: complete
     SWIFT_EMIT_LOC_STRINGS: YES
@@ -75,9 +75,9 @@ targets:
               tsInputModeScriptKey: smUnicodeScript
               tsInputModeCharacterRepertoireKey: [Hans, Hant]
               tsInputModeKeyEquivalentModifiersKey: 4608
-              tsInputModeMenuIconFileKey: RunyanMenu.png
-              tsInputModeAlternateMenuIconFileKey: RunyanMenu.png
-              tsInputModePaletteIconFileKey: RunyanMenu.png
+              tsInputModeMenuIconFileKey: RunyanMenuTemplate.png
+              tsInputModeAlternateMenuIconFileKey: RunyanMenuTemplate.png
+              tsInputModePaletteIconFileKey: RunyanMenuTemplate.png
               tsInputModePrimaryInScriptKey: true
               tsInputModeIsVisibleKey: true
               tsInputModeDefaultStateKey: true

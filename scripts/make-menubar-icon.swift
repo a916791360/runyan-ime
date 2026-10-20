@@ -1,20 +1,21 @@
 import AppKit
 import Foundation
 
-// 生成输入法图标位图。两种模式：
+// 生成输入法图标位图。三种模式：
 //
-//   boxed（默认）—— 深灰圆角方块 + 白色字形。
-//     用于输入法菜单（下拉列表）里那一栏，和搜狗 / 百度那种 1:1 方块图标一致。
-//     系统在下拉列表里按原色渲染，方块和字都能看见。
+//   template（默认）—— 实心圆角方块，字形是**挖空**的（alpha 0），黑色作为遮罩。
+//     系统按模板图渲染：菜单栏（深色）染成白方块、字透出壁纸；下拉列表（浅色）
+//     染成黑方块、字是浅色。就是搜狗 / 百度那种一摸一样的效果，
+//     两份界面共用同一张图，不用各存一张。
 //
-//   glyph —— 只有字形，底色全透明。
-//     专供菜单栏（tsInputMethodIconFileKey）。菜单栏图标会被系统当模板图处理：
-//     只取 alpha，再按菜单栏明暗染成白或黑。所以这一版**不能画底**——
-//     一旦有实心方块，方块就会整块被染白，字反而糊在里头，看着像「白底 + 透出来的壁纸」。
+//   boxed —— 深灰圆角方块 + 白色字形，按原色渲染。给「不认模板」的场合兜底。
 //
-// 尺寸规则（macOS 菜单栏）：1x 用 22×16，2x 用 44×32，系统自动挑。
+//   glyph —— 只有字形，底色全透明。系统会整块染白，字就没了，一般不要用。
 //
-// 用法：swift make-menubar-icon.swift <输出.png> <宽> <高> [boxed|glyph]
+// 尺寸规则：搜狗的菜单图标是 16×16 pt 的矢量 PDF。这里给 16×16 的位图，
+// 1x/2x 各一张（16 / 32 px）——画布等于方块，系统缩放到槽位时不会因为留白显得小。
+//
+// 用法：swift make-menubar-icon.swift <输出.png> <宽> <高> [template|boxed|glyph]
 
 let args = CommandLine.arguments
 guard args.count >= 4 else {
@@ -23,9 +24,9 @@ guard args.count >= 4 else {
 }
 
 let outputPath = args[1]
-let width = Int(args[2]) ?? 22
+let width = Int(args[2]) ?? 16
 let height = Int(args[3]) ?? 16
-let mode = args.count >= 5 ? args[4] : "boxed"
+let mode = args.count >= 5 ? args[4] : "template"
 
 _ = NSApplication.shared
 
@@ -58,6 +59,29 @@ let rect = NSRect(x: (CGFloat(width) - square) / 2, y: 0, width: square, height:
 let glyph = "润" as NSString
 
 switch mode {
+case "template":
+    // 方块铺满画布（留 0.5pt 给抗锯齿），圆弧占 28%——搜狗那个方块量出来就是这个比例。
+    let inset: CGFloat = 0.5
+    let plate = rect.insetBy(dx: inset, dy: inset)
+    NSColor.black.setFill()
+    NSBezierPath(roundedRect: plate, xRadius: plate.width * 0.28, yRadius: plate.width * 0.28).fill()
+
+    // 字形挖空：只扣 alpha，颜色留给系统染。
+    let attributes: [NSAttributedString.Key: Any] = [
+        .font: NSFont.systemFont(ofSize: square * 0.66, weight: .bold),
+        .foregroundColor: NSColor.black,
+    ]
+    let glyphSize = glyph.size(withAttributes: attributes)
+    NSGraphicsContext.current?.compositingOperation = .destinationOut
+    glyph.draw(
+        at: NSPoint(
+            x: rect.midX - glyphSize.width / 2,
+            y: rect.midY - glyphSize.height / 2
+        ),
+        withAttributes: attributes
+    )
+    NSGraphicsContext.current?.compositingOperation = .sourceOver
+
 case "glyph":
     // 只有字形。黑色是给「亮色菜单栏」用的；暗色菜单栏系统会自动染白。
     // 字号略小于方块，留一点呼吸，避免和高分屏抗锯齿打架。
