@@ -12,9 +12,16 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 OUT="$ROOT/build/Release"
-APP="$OUT/Runyan.app"
+# 先在临时目录里组装、签名，最后整体同步到 build/Release。
+# 直接对着 build/Release 反复删目录，既慢又容易留下上一次的残留文件。
+STAGE="$(mktemp -d)/Runyan.app"
+APP="$STAGE"
 SETTINGS_APP="$APP/Contents/Applications/Runyan Settings.app"
 IDENTITY="${RUNYAN_SIGN_IDENTITY:--}"
+# 版本号跟 project.yml 的 MARKETING_VERSION / CURRENT_PROJECT_VERSION 保持一致。
+# Xcode 会从工程设置里展开 $(MARKETING_VERSION)，手工组装得自己填。
+VERSION="0.1.1"
+BUILD_NUMBER="2"
 STAMP="$(date '+%Y-%m-%d %H:%M')"
 
 cd "$ROOT"
@@ -33,10 +40,11 @@ CLI_DIR="$(swift build --package-path Packages/RunyanKit -c release --show-bin-p
 # ---- 3. 两个 App 的可执行文件 ----------------------------------------------
 # SwiftPM 的多架构链接找不到 xcframework 里的单架构 librime，所以按架构分别编译再合并。
 WORK="$ROOT/build/swiftpm-app"
-rm -rf "$WORK"
+# 只重同步源码目录：`.build` 里是编译缓存，删了每次都得从头编。`--delete`
+# 保证删掉的源文件不会留在包里，又不用整棵树 `rm -rf`。
 mkdir -p "$WORK/Sources/RunyanIME" "$WORK/Sources/RunyanSettings"
-rsync -a --include='*/' --include='*.swift' --exclude='*' Apps/Runyan/ "$WORK/Sources/RunyanIME/"
-rsync -a --include='*/' --include='*.swift' --exclude='*' Apps/RunyanSettings/ "$WORK/Sources/RunyanSettings/"
+rsync -a --delete --include='*/' --include='*.swift' --exclude='*' Apps/Runyan/ "$WORK/Sources/RunyanIME/"
+rsync -a --delete --include='*/' --include='*.swift' --exclude='*' Apps/RunyanSettings/ "$WORK/Sources/RunyanSettings/"
 
 cat > "$WORK/Package.swift" <<EOF
 // swift-tools-version: 6.2
@@ -77,7 +85,7 @@ done
 
 # ---- 4. 组装 .app -----------------------------------------------------------
 echo "==> 组装 $APP"
-rm -rf "$OUT" && mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources" \
+mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources" \
   "$APP/Contents/Frameworks" "$APP/Contents/Helpers" "$APP/Contents/SharedSupport" \
   "$SETTINGS_APP/Contents/MacOS" "$SETTINGS_APP/Contents/Resources"
 
@@ -103,8 +111,8 @@ fill_plist() {
   /usr/bin/plutil -replace CFBundleIdentifier -string "$identifier" "$plist"
   /usr/bin/plutil -replace CFBundleName -string "$name" "$plist"
   /usr/bin/plutil -replace CFBundleDisplayName -string "$display" "$plist"
-  /usr/bin/plutil -replace CFBundleShortVersionString -string "0.1.0" "$plist"
-  /usr/bin/plutil -replace CFBundleVersion -string "1" "$plist"
+  /usr/bin/plutil -replace CFBundleShortVersionString -string "$VERSION" "$plist"
+  /usr/bin/plutil -replace CFBundleVersion -string "$BUILD_NUMBER" "$plist"
   /usr/bin/plutil -replace CFBundleDevelopmentRegion -string "zh-Hans" "$plist"
   /usr/bin/plutil -replace RunyanBuildDate -string "$STAMP" "$plist"
 }
@@ -146,4 +154,10 @@ sign --entitlements Apps/Runyan/Runyan.entitlements "$APP/Contents/Helpers/runya
 sign --entitlements Apps/RunyanSettings/RunyanSettings.entitlements "$SETTINGS_APP"
 sign --entitlements Apps/Runyan/Runyan.entitlements "$APP"
 codesign --verify --deep --strict "$APP"
-echo "==> 完成：$APP"
+
+# ---- 6. 发布到 build/Release ------------------------------------------------
+# 用 rsync 带着 `--delete` 合并：上一次构建残留的文件会被清掉，但不用整棵树删。
+mkdir -p "$OUT"
+rsync -aE --delete "$APP/" "$OUT/Runyan.app/"
+codesign --verify --deep --strict "$OUT/Runyan.app"
+echo "==> 完成：$OUT/Runyan.app"

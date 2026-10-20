@@ -19,6 +19,13 @@ final class RunyanInputController: IMKInputController {
     private var bundleID: String?
     private var hasMarkedText = false
     private(set) var isComposing = false
+    /// 光标左右各是什么字符，在拼字开始前抄一份。
+    ///
+    /// 拼字期间输入框只报告 marked 区间：`selectedRange()` 给的是那片组合串，
+    /// `attributedSubstring` 读出来的也是组合串本身，所以上屏那一刻根本问不到
+    /// 「前一个字是什么」。中英空格和括号补全都靠这个上下文，只能在还看得见
+    /// 光标的时候先记下来。
+    private var shapeAnchor: (previous: Character?, next: Character?)?
     /// Active ⌃⌥P rewrite of the selected text (see RunyanInputController+Polish.swift).
     var polish: PolishSession?
     /// Open quick menu (see RunyanInputController+Menu.swift).
@@ -229,6 +236,16 @@ final class RunyanInputController: IMKInputController {
 
         switch event.type {
         case .keyDown:
+            // 拼字开始前先抄一份光标上下文：等组合串挂上去以后就再也读不到了
+            // （见 `shapeAnchor`）。只在没有拼字、没有草稿时抄，所以一个组合串
+            // 只抄一次。
+            if !hasMarkedText, !isComposing, let client {
+                let features = engine.features
+                if features.cjkLatinSpacing || features.autoPairBrackets {
+                    shapeAnchor = (previousCharacter(client), nextCharacter(client))
+                    DebugLog.write("shape anchor hasPrev=\(shapeAnchor?.previous != nil) hasNext=\(shapeAnchor?.next != nil)")
+                }
+            }
             // Menu/draft keys may return before reaching RIME. Its ascii_composer
             // still saw the modifier press; clear that tap latch so the release
             // cannot turn a consumed Shift+key into an accidental mode switch.
@@ -301,6 +318,26 @@ final class RunyanInputController: IMKInputController {
                 // layer on they join the draft; otherwise they go to the app and are
                 // remembered as recently typed text.
                 let typed = Self.printableText(event)
+                // 英文模式下字母是 App 自己插进去的，输入法原本没有机会整形。
+                // 中英之间要补的那个空格只能落在这一笔上：左边紧挨着中文、这一笔
+                // 是拉丁字母时拦一次，补上空格再交给 App；后面的字母左边已经是
+                // 字母，照常直通，不会被拦。
+                if let typed, let client, engine.features.cjkLatinSpacing,
+                   draft.isEmpty, !draftLayerActive, !hasMarkedText,
+                   typed.count == 1, let letter = typed.first,
+                   TextShaping.isLatin(letter),
+                   event.modifierFlags.intersection([.command, .control, .option]).isEmpty,
+                   !IsSecureEventInputEnabled(),
+                   !(bundleID.map { UsageStatsStore.excludedApps.contains($0) } ?? false),
+                   let previous = previousCharacter(client),
+                   TextShaping.needsSpace(previous, letter) {
+                    client.insertText(" " + typed, replacementRange: NSRange(location: NSNotFound, length: 0))
+                    recentText.append(" " + typed)
+                    shapeAnchor = (previous: letter, next: nextCharacter(client))
+                    DebugLog.write("shape latin-prefix space=1")
+                    rememberAsciiMode()
+                    return true
+                }
                 // A draft opens on words only (letters typed in English mode); a space,
                 // digits or punctuation join an open draft and otherwise go to the app.
                 if let typed, draftLayerActive, !draft.isEmpty || DraftBuffer.opensDraft(typed) {
@@ -462,16 +499,29 @@ final class RunyanInputController: IMKInputController {
     ///   · 打出左括号时补上右括号，然后把光标退一格。
     func commitText(_ text: String, client: any IMKTextInput) {
         let features = engine.features
+        // 拼字中读不到光标：用拼字开始前抄下的那份。没有拼字时现读，最准。
+        let context = hasMarkedText
+            ? (shapeAnchor ?? (previous: nil, next: nil))
+            : (previous: previousCharacter(client), next: nextCharacter(client))
         let shaped = TextShaping.shape(
             commit: text,
-            previous: previousCharacter(client),
-            next: nextCharacter(client),
+            previous: context.previous,
+            next: context.next,
             spaceBetweenCJKAndLatin: features.cjkLatinSpacing,
             autoPair: features.autoPairBrackets,
-            allowPair: CaretMover.isTrusted
+            allowPair: CaretMover.canMoveLeft(client)
         )
+        DebugLog.write("shape commit len=\(text.count) marked=\(hasMarkedText) hasPrev=\(context.previous != nil) hasNext=\(context.next != nil) outLen=\(shaped.text.count) caretBack=\(shaped.caretBack)")
         client.insertText(shaped.text, replacementRange: NSRange(location: NSNotFound, length: 0))
-        if shaped.caretBack > 0 { CaretMover.moveLeft(shaped.caretBack) }
+        if shaped.caretBack > 0 { CaretMover.moveLeft(shaped.caretBack, client: client) }
+        // 这一笔上屏后光标落在插入的文本后面：把锚点挪到刚写的字上，避免同一个
+        // marked 串里连续上屏时还在用旧的前一个字。补了右括号时光标停在两括号
+        // 之间，那时左边是左括号、右边是右括号。
+        if shaped.caretBack > 0, let open = shaped.text.first {
+            shapeAnchor = (previous: open, next: shaped.text.last)
+        } else {
+            shapeAnchor = (previous: shaped.text.last ?? context.previous, next: context.next)
+        }
     }
 
     /// 光标左边那个字符。有选区、或者在拼字（marked text）时返回 nil：

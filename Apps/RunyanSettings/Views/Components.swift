@@ -154,8 +154,16 @@ private struct PunctuationSection: View {
 private struct TextShapingSection: View {
     @Environment(SettingsModel.self) private var model
 
+    /// 输入法进程上一次把光标退回去用的哪条路：`client` / `event` / `none`。
+    ///
+    /// 这个判定只能在输入法进程里做 —— 设置是另一个 App，自己查到的权限说明不了
+    /// 输入法有没有权限。所以由输入法把结果写进它自己的偏好域，这里读过来。
+    private var caretReport: String? {
+        UserDefaults(suiteName: ShapingBridge.imeDefaultsSuite)?.string(forKey: ShapingBridge.caretStateKey)
+    }
+
     private var pairedWithoutPermission: Bool {
-        model.features.autoPairBrackets && !AXIsProcessTrusted()
+        model.features.autoPairBrackets && caretReport == "none"
     }
 
     var body: some View {
@@ -169,7 +177,10 @@ private struct TextShapingSection: View {
                 }
             }
             Toggle(isOn: Binding(get: { model.features.autoPairBrackets },
-                                 set: { value in model.updateFeatures { $0.autoPairBrackets = value } })) {
+                                 set: { value in
+                                     model.updateFeatures { $0.autoPairBrackets = value }
+                                     if value { requestAccessibility() }
+                                 })) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("左括号自动补全")
                     Text("打出「（」时自动补上「）」，光标停在两个括号中间。适用于（ 【 「 《 和引号。")
@@ -181,14 +192,13 @@ private struct TextShapingSection: View {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .foregroundStyle(.orange)
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("同目录下的「辅助功能」权限还没给")
+                        Text("润言还没拿到「辅助功能」授权")
                             .font(.callout.weight(.medium))
-                        Text("输入框不提供移动光标的方法，只能补发一个左方向键把光标退到括号中间，这一步需要辅助功能权限。没授权时只输入左括号，不会出错。")
+                        Text("输入框不收「左移一格」这条命令，只能补发一个左方向键把光标退到括号中间，这一步需要手动授权。授权之前只输入左括号，不会出错。")
                             .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                         Button("打开系统设置授权") {
-                            if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {
-                                NSWorkspace.shared.open(url)
-                            }
+                            requestAccessibility()
+                            CaretMoverHelp.openAccessibilitySettings()
                         }
                         .controlSize(.small)
                     }
@@ -199,6 +209,20 @@ private struct TextShapingSection: View {
         } footer: {
             Text("这两条只影响润言自己上屏的那一笔，不会去改已经写在输入框里的文字。")
         }
+    }
+
+    /// 让输入法进程去弹系统授权提示：TCC 按进程记权限，设置面板替它要没用。
+    private func requestAccessibility() {
+        DistributedNotificationCenter.default().post(name: ShapingBridge.requestAccessibility, object: nil)
+    }
+}
+
+/// 设置面板只能打开「辅助功能」那一页，授权本身要用户自己点。
+private enum CaretMoverHelp {
+    static func openAccessibilitySettings() {
+        guard let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")
+        else { return }
+        NSWorkspace.shared.open(url)
     }
 }
 

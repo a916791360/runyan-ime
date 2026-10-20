@@ -69,17 +69,17 @@ public enum TextShaping {
 
     /// 相邻两个字符之间该不该插空格：一个是拉丁，另一个是中文。
     /// 空格、标点、emoji 都不算，所以不会出现「空格前面再加一个空格」。
-    static func needsSpace(_ left: Character, _ right: Character) -> Bool {
+    public static func needsSpace(_ left: Character, _ right: Character) -> Bool {
         (isLatin(left) && isWide(right)) || (isWide(left) && isLatin(right))
     }
 
     /// ASCII 字母与数字。全角字符不算——它们本来就属于中文排版。
-    static func isLatin(_ character: Character) -> Bool {
+    public static func isLatin(_ character: Character) -> Bool {
         character.isASCII && (character.isLetter || character.isNumber)
     }
 
     /// 汉字、假名、谚文，以及它们常用的全角标点。
-    static func isWide(_ character: Character) -> Bool {
+    public static func isWide(_ character: Character) -> Bool {
         guard let scalar = character.unicodeScalars.first else { return false }
         switch scalar.value {
         case 0x3000...0x303F,     // 中文标点
