@@ -18,6 +18,9 @@ public final class CandidatePanel {
     private var lastCursorRect: NSRect = .zero
     /// 上次隐藏的时刻。紧跟隐藏又弹出时不重播出现动画，否则看着像在闪。
     private var hiddenAt: Date = .distantPast
+    /// 上次真正展示的内容。内容与位置都没变时不再重绘 —— 一些 App 会持续发合成按键，
+    /// 每个按键都来一次 show，重绘连起来就是「在闪」。
+    private var lastShownState: PanelState?
     /// 排查用：把每次 show 的锚点与落点交给外部（DebugLog）。不设置则什么都不做。
     public var showTrace: ((String) -> Void)?
     private let container = NSView()
@@ -94,6 +97,10 @@ public final class CandidatePanel {
         guard !state.isEmpty else { hide(); return }
         let transition = pendingTransition ?? requested
         pendingTransition = nil
+        let anchorUnchanged = cursorRect == .zero || cursorRect == lastCursorRect
+        if window.isVisible, anchorUnchanged, transition == .none, let shown = lastShownState, shown == state {
+            return // 什么都没变：不再动它
+        }
         let interval = signposter.beginInterval("update")
         defer { signposter.endInterval("update", interval) }
 
@@ -147,7 +154,9 @@ public final class CandidatePanel {
         if view.frame != viewFrame { view.frame = viewFrame }
         view.needsDisplay = true
 
-        let animate = motionAllowed && !appearing && previous != .zero && previous.size != size
+        // 每敲一个字就做一次宽度过渡，看着像在闪：只在行数变了（高度）或宽度差得多时才动。
+        let animate = motionAllowed && !appearing && previous != .zero
+            && (abs(previous.height - size.height) > 1 || abs(previous.width - size.width) > 48)
         let transitioning = transition != .none && motionAllowed && !appearing
         if transitioning { playTransition(transition) }
         hideHoldCue()
@@ -175,6 +184,7 @@ public final class CandidatePanel {
         if state.busy || state.glow { showBusy(radius: radius, shimmer: state.busy) } else { hideBusy() }
         updateHeroGlow()
 
+        lastShownState = state
         if appearing {
             window.alphaValue = 1
             window.orderFrontRegardless()
@@ -442,6 +452,7 @@ public final class CandidatePanel {
 
     public func hide() {
         hiddenAt = Date()
+        lastShownState = nil
         container.layer?.removeAllAnimations()
         for layer in [background, effectMask, textMask] { layer.removeAllAnimations() }
         view.layer?.removeAllAnimations()
