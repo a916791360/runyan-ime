@@ -43,10 +43,14 @@ public struct PanelState: Sendable, Equatable {
     /// Shows the small Runyan button at the trailing edge (opens the quick menu).
     public var showsMenuButton = false
 
+    /// 段落式（AI 结果）的正文比普通候选小一号：长句子本来就要换行，字大了面板会撑得很高。
+    static let paragraphFontScale = 0.88
     /// `paragraphs` is a list whose items wrap onto several lines (AI results): the
-    /// highlighted one shows up to `paragraphLines` lines, the others a two-line preview.
+    /// highlighted one shows up to `paragraphLines` lines, the others a short preview.
     public enum Presentation: Sendable, Equatable { case candidates, grid, list, row, paragraphs }
     public static let paragraphLines = 8
+    /// 非高亮项最多给三行：两行对一句话来说常常差一口气，会把结尾吃掉。
+    public static let paragraphPreviewLines = 3
     public static let paragraphWidth = 560.0
 
     /// Symbol keyboard: category tabs over a fixed grid of cells (`candidates` are the
@@ -194,8 +198,10 @@ public final class CandidateView: NSView {
         var labelWidth: CGFloat = 0
         /// Board cells: the key that picks the cell, drawn small in its top-left corner.
         var cornerHint: CTLine?
-        /// Wrapped items: the lines after the first, one `paragraphStep` apart.
+        /// Wrapped items: the lines after the first, one `lineStep` apart.
         var moreLines: [CTLine] = []
+        /// Wrapped items: baseline distance between lines (paragraph text is smaller).
+        var lineStep: CGFloat = 0
         /// Wrapped items: the comment as a small tag before the first line.
         var tagLine: CTLine?
     }
@@ -206,7 +212,14 @@ public final class CandidateView: NSView {
     }
     private var tagFontPoint: Double { max(10, (theme.fontPoint * 0.62).rounded()) }
     /// Distance between the baselines of a wrapped item's lines.
-    private var paragraphStep: CGFloat { lineMetrics.height + 2 }
+    private var paragraphStep: CGFloat { paragraphMetrics.height + 2 }
+    /// 段落正文小一号，行盒也跟着小，不然行间距会显得空。
+    private var paragraphMetrics: (ascent: CGFloat, height: CGFloat) {
+        let face = font(theme.fontFace, theme.fontPoint * PanelState.paragraphFontScale)
+        let ascent = ceil(face.ascender * 1.06)
+        let descent = ceil(-face.descender * 1.06)
+        return (ascent, ascent + descent)
+    }
     private static let symbolGap: CGFloat = 6
     /// Fixed line box for candidates, from the theme's candidate / label / comment fonts
     /// (with a little headroom for emoji and fallback glyphs). Cached per theme.
@@ -274,9 +287,9 @@ public final class CandidateView: NSView {
         NSColor(srgbRed: color.red, green: color.green, blue: color.blue, alpha: color.alpha)
     }
 
-    private func candidateLine(_ candidate: PanelState.Candidate, highlighted: Bool) -> NSAttributedString {
+    private func candidateLine(_ candidate: PanelState.Candidate, highlighted: Bool, pointScale: Double = 1) -> NSAttributedString {
         let text = NSMutableAttributedString()
-        let textFont = font(theme.fontFace, theme.fontPoint)
+        let textFont = font(theme.fontFace, theme.fontPoint * pointScale)
         let paragraph = NSMutableParagraphStyle()
         paragraph.lineBreakMode = .byClipping
         let base: [NSAttributedString.Key: Any] = [.paragraphStyle: paragraph, .baselineOffset: 0]
@@ -484,6 +497,8 @@ public final class CandidateView: NSView {
         struct Measured {
             var line: CTLine, moreLines: [CTLine] = [], tagLine: CTLine? = nil, labelLine: CTLine?, labelWidth: CGFloat, symbol: String?
             var textSize: NSSize, width: Double, height: Double
+            /// 段落项的基线偏移与行距，普通候选沿用主题字体的那套。
+            var ascent: CGFloat = 0, lineStep: CGFloat = 0
         }
         var measured: [Measured] = []
         measured.reserveCapacity(state.candidates.count)
@@ -519,7 +534,8 @@ public final class CandidateView: NSView {
             let firstIndent = Double(tagSpace(tagLine))
             // Without its label the formatted text may start with a space; wrapped items
             // would then have continuation lines left of the first one.
-            let formatted = NSMutableAttributedString(attributedString: candidateLine(shown, highlighted: highlighted))
+            let formatted = NSMutableAttributedString(attributedString: candidateLine(
+                shown, highlighted: highlighted, pointScale: wraps ? PanelState.paragraphFontScale : 1))
             if wraps {
                 while formatted.string.hasPrefix(" ") { formatted.deleteCharacters(in: NSRange(location: 0, length: 1)) }
             }
@@ -531,7 +547,7 @@ public final class CandidateView: NSView {
                 // Break into lines; the last one allowed ends with an ellipsis.
                 let full = formatted
                 let typesetter = CTTypesetterCreateWithAttributedString(full)
-                let limit = highlighted ? PanelState.paragraphLines : 2
+                let limit = highlighted ? PanelState.paragraphLines : PanelState.paragraphPreviewLines
                 var lines: [CTLine] = []
                 var start = 0
                 while start < full.length, lines.count < limit {
@@ -576,11 +592,14 @@ public final class CandidateView: NSView {
             }
             // Height and baseline come from the theme's fonts, never from the content: an
             // emoji or a fallback font in one candidate must not make the panel jump.
-            let size = NSSize(width: typographicWidth, height: lineMetrics.height + CGFloat(moreLines.count) * paragraphStep)
+            let metrics = wraps ? paragraphMetrics : lineMetrics
+            let step = metrics.height + 2
+            let size = NSSize(width: typographicWidth, height: metrics.height + CGFloat(moreLines.count) * step)
             let symbolWidth = (candidate.symbol == nil ? 0 : symbolSide + Self.symbolGap) + labelWidth
             measured.append(Measured(line: line, moreLines: moreLines, tagLine: tagLine, labelLine: labelLine, labelWidth: labelWidth, symbol: candidate.symbol,
                                      textSize: NSSize(width: ceil(size.width), height: size.height),
-                                     width: ceil(size.width) + symbolWidth + padX * 2, height: ceil(size.height) + padY * 2))
+                                     width: ceil(size.width) + symbolWidth + padX * 2, height: ceil(size.height) + padY * 2,
+                                     ascent: metrics.ascent, lineStep: step))
         }
         // Where a row breaks. A page of ordinary candidates stays on one line however many
         // there are (only the screen limits it, as in other input methods). The maximum
@@ -592,7 +611,7 @@ public final class CandidateView: NSView {
             rowLimit = maxRowWidth - insetX - buttonReserve
         }
         for entry in measured {
-            let ascent = lineMetrics.ascent
+            let ascent = entry.ascent
             let width = entry.width, height = entry.height
             let rect: NSRect
             switch mode {
@@ -613,7 +632,7 @@ public final class CandidateView: NSView {
             }
             items.append(Item(line: entry.line, rect: rect, textSize: entry.textSize,
                               ascent: ascent, symbol: entry.symbol, labelLine: entry.labelLine, labelWidth: entry.labelWidth,
-                              moreLines: entry.moreLines, tagLine: entry.tagLine))
+                              moreLines: entry.moreLines, lineStep: entry.lineStep, tagLine: entry.tagLine))
             maxWidth = max(maxWidth, rect.maxX)
         }
         switch mode {
@@ -964,7 +983,7 @@ public final class CandidateView: NSView {
             }
             CTLineDraw(item.line, context)
             for (offset, line) in item.moreLines.enumerated() {
-                context.textPosition = CGPoint(x: x, y: baseline + CGFloat(offset + 1) * paragraphStep)
+                context.textPosition = CGPoint(x: x, y: baseline + CGFloat(offset + 1) * (item.lineStep > 0 ? item.lineStep : paragraphStep))
                 CTLineDraw(line, context)
             }
         }
