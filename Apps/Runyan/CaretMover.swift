@@ -40,6 +40,12 @@ enum CaretMover {
     @discardableResult
     static func moveLeft(_ count: Int = 1, client: (any IMKTextInput)? = nil) -> Bool {
         guard count > 0 else { return false }
+        // 有权限时先用合成按键：这条路每个 App 都认，是确定能动的。没有权限才试
+        // `doCommandBySelector:` —— 它不需要授权，但个别输入框收了不办事。
+        if isTrusted, postLeftArrow(count) {
+            note("event")
+            return true
+        }
         if let client, supportsDoCommand(client) {
             for _ in 0..<count {
                 (client as AnyObject).perform(doCommand, with: #selector(NSResponder.moveLeft(_:)))
@@ -47,16 +53,8 @@ enum CaretMover {
             note("client")
             return true
         }
-        guard isTrusted else {
-            note("none")
-            return false
-        }
-        guard postLeftArrow(count) else {
-            note("none")
-            return false
-        }
-        note("event")
-        return true
+        note("none")
+        return false
     }
 
     private static func postLeftArrow(_ count: Int) -> Bool {
