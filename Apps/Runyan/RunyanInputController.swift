@@ -660,8 +660,10 @@ final class RunyanInputController: IMKInputController {
         scheduleDraftAutoCommit()
         guard isComposing else {
             // A pending draft shows a small hint under it (what the layer is waiting for).
+            // 正在等 AI 结果或菜单时不要动面板：一次修饰键松手也会走到这里，
+            // 之前会把「正在润色」直接抹掉，看起来像「一松手就结束了」。
             if draft.isEmpty {
-                engine.panel.hide()
+                if quickMenu == nil, polish == nil { engine.panel.hide() }
             } else if quickMenu == nil, polish == nil {
                 engine.panel.show(draftHint, at: cursorRect(client: client))
             }

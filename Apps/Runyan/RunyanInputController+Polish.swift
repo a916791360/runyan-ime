@@ -120,6 +120,7 @@ extension RunyanInputController {
         }
 
         engine.cancelStatus()
+        DebugLog.write("action start title=\(action.title) len=\(text.utf16.count) provider=\(features.aiProvider) model=\(features.aiModel)")
         var working = PanelState(status: "正在\(action.title)")
         working.busy = true
         working.statusHint = "Esc 取消"
@@ -127,11 +128,13 @@ extension RunyanInputController {
         var request = PolishSession(target: target, title: action.title)
         request.task = Task { @MainActor [weak self] in
             if case let .unavailable(reason) = await provider.availability() {
+                DebugLog.write("action unavailable reason=\(reason)")
                 self?.cancelPolish(message: reason)
                 return
             }
             do {
                 let variants = try await TextActionRunner(provider: provider).run(action, on: text)
+                DebugLog.write("action result variants=\(variants.count) cancelled=\(Task.isCancelled)")
                 guard !Task.isCancelled, let self, self.polish?.target == target else { return }
                 guard !variants.isEmpty else { return self.cancelPolish(message: "没有可用的结果") }
                 self.polish?.variants = variants
@@ -139,6 +142,7 @@ extension RunyanInputController {
             } catch {
                 guard !Task.isCancelled else { return }
                 let message = (error as? AIError)?.description ?? "\(action.title)失败"
+                DebugLog.write("action error=\(message)")
                 self?.cancelPolish(message: message.count > 60 ? String(message.prefix(60)) + "…" : message)
             }
         }
@@ -190,6 +194,7 @@ extension RunyanInputController {
 
     func cancelPolish(message: String? = nil) {
         guard let request = polish else { return }
+        DebugLog.write("action cancel message=\(message ?? "-")")
         request.task?.cancel()
         polish = nil
         guard ownsPanel else { return }
