@@ -20,8 +20,8 @@ SETTINGS_APP="$APP/Contents/Applications/Runyan Settings.app"
 IDENTITY="${RUNYAN_SIGN_IDENTITY:--}"
 # 版本号跟 project.yml 的 MARKETING_VERSION / CURRENT_PROJECT_VERSION 保持一致。
 # Xcode 会从工程设置里展开 $(MARKETING_VERSION)，手工组装得自己填。
-VERSION="0.1.9"
-BUILD_NUMBER="12"
+VERSION="0.1.10"
+BUILD_NUMBER="13"
 STAMP="$(date '+%Y-%m-%d %H:%M')"
 
 cd "$ROOT"
@@ -115,6 +115,9 @@ fill_plist() {
   /usr/bin/plutil -replace CFBundleVersion -string "$BUILD_NUMBER" "$plist"
   /usr/bin/plutil -replace CFBundleDevelopmentRegion -string "zh-Hans" "$plist"
   /usr/bin/plutil -replace RunyanBuildDate -string "$STAMP" "$plist"
+  # 不写这两行，Dock 上就是一张白纸：AppIcon.icns 在包里，但系统不知道该用它。
+  /usr/bin/plutil -replace CFBundleIconName -string "AppIcon" "$plist"
+  /usr/bin/plutil -replace CFBundleIconFile -string "AppIcon" "$plist"
 }
 fill_plist "$APP/Contents/Info.plist" "Runyan" "app.runyan.inputmethod.zh" "Runyan" "润言"
 fill_plist "$SETTINGS_APP/Contents/Info.plist" "Runyan Settings" "app.runyan.inputmethod.zh.settings" "Runyan Settings" "润言设置"
@@ -124,6 +127,8 @@ xcrun actool Apps/Shared/Assets.xcassets --compile "$APP/Contents/Resources" \
   --platform macosx --minimum-deployment-target 26.0 --app-icon AppIcon \
   --output-partial-info-plist "$WORK/actool.plist" >/dev/null
 ditto "$APP/Contents/Resources/Assets.car" "$SETTINGS_APP/Contents/Resources/Assets.car"
+# 设置 App 自己也要带一份 icns：它被单独启动，Dock 只认自己包里的图标。
+cp "$APP/Contents/Resources/AppIcon.icns" "$SETTINGS_APP/Contents/Resources/AppIcon.icns" 2>/dev/null || true
 cp Apps/Runyan/Resources/*.png "$APP/Contents/Resources/"
 cp -R Apps/Runyan/Resources/zh-Hans.lproj Apps/Runyan/Resources/en.lproj "$APP/Contents/Resources/"
 

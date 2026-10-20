@@ -8,6 +8,16 @@
 
 ## [Unreleased]
 
+## [0.1.10] - 2026-10-20
+
+> 个人开发版 · Apple Development 签名 · 未公证
+
+### 修复
+
+- **Dock 上的图标是白纸**：`AppIcon.icns` 一直躺在包里，但两个 App 的 Info.plist
+  都没写 `CFBundleIconName` / `CFBundleIconFile`，系统不知道该用它；设置 App 的包里
+  甚至没拷这份图标文件。现在两个 App 都声明了图标键，设置 App 也带上自己的 `AppIcon.icns`。
+
 ## [0.1.9] - 2026-10-20
 
 > 个人开发版 · Apple Development 签名 · 未公证
