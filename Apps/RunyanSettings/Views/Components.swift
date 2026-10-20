@@ -194,9 +194,10 @@ private struct TextShapingSection: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("润言还没拿到「辅助功能」授权")
                             .font(.callout.weight(.medium))
-                        Text("输入框不收「左移一格」这条命令，只能补发一个左方向键把光标退到括号中间，这一步需要手动授权。授权之前只输入左括号，不会出错。")
+                        Text("输入框不收「左移一格」这条命令，只能补发一个左方向键把光标退到括号中间，这一步需要手动授权：面板里点 ＋，按 ⌘⇧G 粘贴刚复制的路径，选 Runyan.app 打开开关。授权之前只输入左括号，不会出错。")
                             .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-                        Button("打开系统设置授权") {
+                        Button("复制路径并打开授权面板") {
+                            CaretMoverHelp.copyAppPath()
                             requestAccessibility()
                             CaretMoverHelp.openAccessibilitySettings()
                         }
@@ -219,6 +220,18 @@ private struct TextShapingSection: View {
 
 /// 设置面板只能打开「辅助功能」那一页，授权本身要用户自己点。
 private enum CaretMoverHelp {
+    /// 输入法本体的位置。授权列表里要选这个 App，而不是「设置」。
+    static var appPath: String {
+        FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent("Library/Input Methods/Runyan.app").path
+    }
+
+    /// 那个目录在 Finder 里是隐藏的，先把路径放进剪贴板，用户在面板里 ⌘⇧G 一粘就到。
+    static func copyAppPath() {
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(appPath, forType: .string)
+    }
+
     static func openAccessibilitySettings() {
         guard let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")
         else { return }

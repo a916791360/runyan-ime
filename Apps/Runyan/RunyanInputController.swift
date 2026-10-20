@@ -503,13 +503,20 @@ final class RunyanInputController: IMKInputController {
         let context = hasMarkedText
             ? (shapeAnchor ?? (previous: nil, next: nil))
             : (previous: previousCharacter(client), next: nextCharacter(client))
+        let canMoveCaret = CaretMover.canMoveLeft(client)
+        // 这一笔是左括号、却挪不了光标：记下来，设置里会提示去授权，
+        // 不然用户只看到「怎么只出了一个括号」，没有任何线索。
+        if features.autoPairBrackets, !canMoveCaret, text.count == 1,
+           let character = text.first, TextShaping.pairs[character] != nil {
+            CaretMover.recordUnavailable()
+        }
         let shaped = TextShaping.shape(
             commit: text,
             previous: context.previous,
             next: context.next,
             spaceBetweenCJKAndLatin: features.cjkLatinSpacing,
             autoPair: features.autoPairBrackets,
-            allowPair: CaretMover.canMoveLeft(client)
+            allowPair: canMoveCaret
         )
         DebugLog.write("shape commit len=\(text.count) marked=\(hasMarkedText) hasPrev=\(context.previous != nil) hasNext=\(context.next != nil) outLen=\(shaped.text.count) caretBack=\(shaped.caretBack)")
         client.insertText(shaped.text, replacementRange: NSRange(location: NSNotFound, length: 0))

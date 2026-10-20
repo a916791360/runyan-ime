@@ -79,6 +79,10 @@ enum CaretMover {
         defaults.set(path, forKey: stateKey)
     }
 
+    /// 打出左括号却因为「挪不了光标」没补右括号时记一笔。
+    /// 设置面板据此提示去授权 —— 不然用户只会看到「怎么只出了一个括号」。
+    static func recordUnavailable() { note("none") }
+
     /// 让系统弹出「授权辅助功能」的提示。
     ///
     /// 必须由输入法进程自己调用：TCC 按进程记权限，设置面板替它要没用。
