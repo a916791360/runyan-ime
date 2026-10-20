@@ -24,6 +24,8 @@ struct PolishSession {
     var variants: [TextPolisher.Variant] = []
     var highlighted = 0
     var task: Task<Void, Never>?
+    /// 等结果时每秒刷一次「已等 N 秒」，让人知道还活着。
+    var ticker: Task<Void, Never>?
 }
 
 /// AI actions (润色 / 翻译 / the user's own prompts) on explicit request only. They work on,
@@ -126,17 +128,36 @@ extension RunyanInputController {
         working.statusHint = "Esc 取消"
         engine.panel.show(working, at: cursorRect(client: client), transition: .push)
         var request = PolishSession(target: target, title: action.title)
+        // 输入法在后台跑，App Nap 会把回调排队：请求早在 2 秒前就回来了，
+        // 界面却几十秒不动。声明一次「用户发起的活动」，等结果的这段时间不降频。
+        let activity = ProcessInfo.processInfo.beginActivity(
+            options: [.userInitiated, .idleSystemSleepDisabled], reason: "AI \(action.title)")
+        request.ticker = Task { @MainActor [weak self] in
+            let start = Date()
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(1))
+                guard !Task.isCancelled, let self, let current = self.polish,
+                      current.variants.isEmpty, self.ownsPanel else { return }
+                var state = PanelState(status: "正在\(action.title) · \(Int(Date().timeIntervalSince(start))) 秒")
+                state.busy = true
+                state.statusHint = "Esc 取消"
+                InputEngine.shared.panel.show(state, at: self.cursorRect())
+            }
+        }
         request.task = Task { @MainActor [weak self] in
+            defer { ProcessInfo.processInfo.endActivity(activity) }
             if case let .unavailable(reason) = await provider.availability() {
                 DebugLog.write("action unavailable reason=\(reason)")
                 self?.cancelPolish(message: reason)
                 return
             }
             do {
+                let started = Date()
                 let variants = try await TextActionRunner(provider: provider).run(action, on: text)
-                DebugLog.write("action result variants=\(variants.count) cancelled=\(Task.isCancelled)")
+                DebugLog.write("action result variants=\(variants.count) elapsed=\(Int(Date().timeIntervalSince(started) * 1000))ms cancelled=\(Task.isCancelled)")
                 guard !Task.isCancelled, let self, self.polish?.target == target else { return }
                 guard !variants.isEmpty else { return self.cancelPolish(message: "没有可用的结果") }
+                self.polish?.ticker?.cancel()
                 self.polish?.variants = variants
                 self.showPolish(client: client, transition: .push)
             } catch {
@@ -196,6 +217,7 @@ extension RunyanInputController {
         guard let request = polish else { return }
         DebugLog.write("action cancel message=\(message ?? "-")")
         request.task?.cancel()
+        request.ticker?.cancel()
         polish = nil
         guard ownsPanel else { return }
         if let message {
