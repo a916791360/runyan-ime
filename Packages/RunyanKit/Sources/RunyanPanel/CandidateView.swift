@@ -156,6 +156,9 @@ public final class CandidateView: NSView {
     private var scrollThumb: (track: NSRect, thumb: NSRect)?
     private var wheelAccumulator: CGFloat = 0
     private var menuButtonRect: NSRect = .zero
+    /// 多页候选时角落里的「当前页 ›」。
+    private var pageBadgeRect: NSRect = .zero
+    private var pageBadgeLine: CTLine?
     private var busyIconRect: NSRect = .zero
     private var badgeLayout: (line: NSAttributedString, rect: NSRect)?
     /// Whether the 中 / 英 chip is laid out (for tests).
@@ -379,6 +382,8 @@ public final class CandidateView: NSView {
         busyIconRect = .zero
         badgeLayout = nil
         menuButtonRect = .zero
+        pageBadgeRect = .zero
+        pageBadgeLine = nil
         if let board = state.board {
             layoutBoard(board, insetX: insetX, insetY: insetY)
             return
@@ -459,6 +464,8 @@ public final class CandidateView: NSView {
         }
         let symbolSide = ceil(theme.fontPoint * 1.05)
         menuButtonRect = .zero
+        pageBadgeRect = .zero
+        pageBadgeLine = nil
         rowMetrics = nil
 
         // Main action row (menu pages): icon, title, what it offers, and its key.
@@ -677,6 +684,28 @@ public final class CandidateView: NSView {
             menuButtonRect = NSRect(x: maxWidth - side, y: cursorY, width: side, height: side)
             cursorY += side
         }
+        // 翻页指示。页码与「还有没有下一页」本来就在 state 里（sync() 每次都写），
+        // 只是一直没人画 —— 用户看不出来后面还有候选。
+        if theme.showPaging, !items.isEmpty, state.pageNumber > 0 || !state.isLastPage {
+            let more = !state.isLastPage
+            let text = state.pageNumber > 0 ? (more ? "\(state.pageNumber + 1) ›" : "\(state.pageNumber + 1)") : "›"
+            let line = CTLineCreateWithAttributedString(NSAttributedString(string: text, attributes: [
+                .font: font(theme.labelFontFace, max(theme.labelFontPoint, theme.fontPoint * 0.78)),
+                NSAttributedString.Key(kCTForegroundColorAttributeName as String):
+                    nsColor(theme.commentTextColor).withAlphaComponent(0.9).cgColor,
+            ]))
+            var ascent: CGFloat = 0, descent: CGFloat = 0
+            let width = ceil(CTLineGetTypographicBounds(line, &ascent, &descent, nil))
+            let height = ceil(ascent + descent)
+            if mode == .linear {
+                pageBadgeRect = NSRect(x: maxWidth + 6, y: items[0].rect.midY - height / 2, width: width, height: height)
+            } else {
+                pageBadgeRect = NSRect(x: maxWidth - width, y: cursorY, width: width, height: height)
+                cursorY += height + 2
+            }
+            pageBadgeLine = line
+            maxWidth = max(maxWidth, pageBadgeRect.maxX)
+        }
         heroLayout?.rect.size.width = maxWidth - insetX
         if state.candidates.isEmpty, preeditLine != nil, heroLayout == nil { cursorY -= theme.lineSpacing + 2 }
         contentSize = NSSize(width: ceil(maxWidth + insetX), height: ceil(cursorY + insetY))
@@ -711,6 +740,8 @@ public final class CandidateView: NSView {
     /// scrolling or switching categories), a slim scroll indicator and a hint line.
     private func layoutBoard(_ board: PanelState.Board, insetX: Double, insetY: Double) {
         menuButtonRect = .zero
+        pageBadgeRect = .zero
+        pageBadgeLine = nil
         rowMetrics = nil
         let cell = ceil(theme.fontPoint * 1.95)
         let gap: CGFloat = 2
@@ -986,6 +1017,12 @@ public final class CandidateView: NSView {
                 context.textPosition = CGPoint(x: x, y: baseline + CGFloat(offset + 1) * (item.lineStep > 0 ? item.lineStep : paragraphStep))
                 CTLineDraw(line, context)
             }
+        }
+        if pageBadgeRect != .zero, let line = pageBadgeLine, let cg = NSGraphicsContext.current?.cgContext {
+            var ascent: CGFloat = 0, descent: CGFloat = 0
+            _ = CTLineGetTypographicBounds(line, &ascent, &descent, nil)
+            cg.textPosition = CGPoint(x: pageBadgeRect.minX, y: pageBadgeRect.minY + descent)
+            CTLineDraw(line, cg)
         }
         if menuButtonRect != .zero {
             drawSymbol("square.grid.2x2", in: menuButtonRect.insetBy(dx: 2, dy: 2), color: theme.commentTextColor)

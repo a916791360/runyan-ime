@@ -51,7 +51,7 @@ struct ThemeImportSheet: View {
                 if package.layout != nil {
                     Toggle("同时采用主题的布局（圆角、边距、间距、字号），与官网预览一致", isOn: $adoptLayout)
                         .toggleStyle(.checkbox)
-                    Text(adoptLayout ? "会替换你在「外观」里设置的这些数值；字体、横竖排与「我的配色」不变。"
+                    Text(adoptLayout ? "会替换你在「外观」里设置的这些数值；字体、排列方式与「我的配色」不变。"
                          : "只导入颜色，沿用你当前的布局。")
                         .foregroundStyle(Theme.secondaryText)
                 } else {

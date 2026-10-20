@@ -78,7 +78,8 @@ public struct PanelTheme: Sendable, Hashable {
     public var schemeName: String
     public var displayName: String
     public var layout: Layout
-    public var vertical: Bool
+    /// `show_paging`: 多页时在面板角落显示「当前页 ›」。Squirrel 的开关，默认开。
+    public var showPaging: Bool
     public var inlinePreedit: Bool
     public var inlineCandidate: Bool
     public var translucency: Bool
@@ -155,7 +156,7 @@ public struct PanelTheme: Sendable, Hashable {
         displayName = scheme["name"]?.stringValue ?? name
         let layoutName = string("candidate_list_layout", "linear")
         layout = layoutName == "stacked" ? .stacked : .linear
-        vertical = string("text_orientation", "horizontal") == "vertical"
+        showPaging = bool("show_paging", true)
         inlinePreedit = bool("inline_preedit", true)
         inlineCandidate = bool("inline_candidate", false)
         translucency = bool("translucency", false)

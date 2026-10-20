@@ -394,8 +394,8 @@ private struct HabitsStep: View {
             HStack(alignment: .top, spacing: 28) {
                 row("排列") {
                     Picker("", selection: $choices.layout) {
-                        Text("横排").tag("linear")
-                        Text("竖排").tag("stacked")
+                        Text("一行").tag("linear")
+                        Text("一列").tag("stacked")
                     }
                 }
                 row("每页候选") {

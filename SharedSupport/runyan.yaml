@@ -45,7 +45,7 @@ style:
   comment_font_point: 13
   # Placeholders: [label] [candidate] [comment]
   candidate_format: "[label] [candidate] [comment]"
-  show_paging: false
+  show_paging: true
   status_message_type: mixed
 
 # Per-application defaults, keyed by bundle identifier.

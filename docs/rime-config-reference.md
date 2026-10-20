@@ -533,14 +533,14 @@ Runyan 的前端配置文件为 `runyan.yaml`，键结构与 `squirrel.yaml` 完
 | 字段 | 默认 | 说明 |
 |---|---|---|
 | `color_scheme` / `color_scheme_dark` | native | 浅色/深色模式配色方案名（对应 preset_color_schemes 键名） |
-| `candidate_list_layout` | stacked | 候选排列：`stacked` 竖排 / `linear` 横排（`horizontal` 键自 1.0.1 移除） |
-| `text_orientation` | horizontal | 文字方向 horizontal / vertical |
+| `candidate_list_layout` | stacked | 候选排列：`stacked` 一列 / `linear` 一行（指排列方向，不是文字竖排） |
+| `text_orientation` | horizontal | 文字方向。**只支持 horizontal**，写 vertical 不会生效 |
 | `inline_preedit` | true | 输入码内联在编辑区 |
 | `inline_candidate` | false | 首选候选内联预上屏 |
 | `memorize_size` | true | 记住候选窗大小 |
 | `mutual_exclusive` | false | 各外观选项互斥（高度由内容决定） |
 | `translucency` | false | 半透明毛玻璃 |
-| `show_paging` | false | 显示翻页指示 |
+| `show_paging` | true | 多页时在面板角落显示「当前页 ›」 |
 | `corner_radius` | 7 | 候选窗圆角（配色方案里的同名键优先） |
 | `runyan/max_width` | 640 | **Runyan 扩展**：候选窗最大宽度（点）。只约束长候选：单个候选超出时以省略号截断，含长候选的一页超出时换行；普通候选（每个不超过该值的 1/3）一页始终一行，仅受屏幕宽度 90% 限制；0 表示单个候选仅受屏幕宽度 60% 限制（参考 Weasel `max_width`） |
 | `runyan/corner_radius` | 10 | **Runyan 扩展**：优先于配色方案的圆角；设置 App 的「候选窗圆角」写这里，0 为直角。未设置时圆角不低于 8pt（高亮不低于 5pt） |
@@ -670,7 +670,7 @@ catalog: menu.page_size
 ---
 
 > **Runyan 候选窗当前未实现的 squirrel.yaml 前端选项**（已从可视化目录移除，写入不会生效）：
-> `style/text_orientation: vertical`（竖排）、`style/shadow_size`、`style/show_paging`、`style/memorize_size`、
+> `style/text_orientation: vertical`（竖排）、`style/shadow_size`、`style/memorize_size`、
 > `style/mutual_exclusive`、`keyboard_layout`、`show_notifications_when`。列入 Roadmap，实现后再加回目录。
 
 ## ascii_state（Runyan 扩展，runyan.yaml）

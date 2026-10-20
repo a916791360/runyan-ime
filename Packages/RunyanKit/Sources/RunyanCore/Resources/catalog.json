@@ -144,10 +144,22 @@
       "keypath": "traditionalize/opencc_config",
       "type": "enum",
       "options": [
-        { "value": "s2t.json", "title": "通用繁体" },
-        { "value": "s2tw.json", "title": "台湾正体" },
-        { "value": "s2twp.json", "title": "台湾正体（含常用词）" },
-        { "value": "s2hk.json", "title": "香港繁体" }
+        {
+          "value": "s2t.json",
+          "title": "通用繁体"
+        },
+        {
+          "value": "s2tw.json",
+          "title": "台湾正体"
+        },
+        {
+          "value": "s2twp.json",
+          "title": "台湾正体（含常用词）"
+        },
+        {
+          "value": "s2hk.json",
+          "title": "香港繁体"
+        }
       ],
       "default": "s2t.json",
       "doc": "#simplifier"
@@ -826,18 +838,18 @@
       "id": "appearance.candidate_list_layout",
       "group": "appearance",
       "title": "候选排列方式",
-      "description": "stacked 竖排列表 / linear 横排一行。",
+      "description": "一列往下 / 一行排开。这是候选的排列方向，不是文字竖排（RIME 的 text_orientation 暂不支持）。",
       "file": "frontend",
       "keypath": "style/runyan/candidate_list_layout",
       "type": "enum",
       "options": [
         {
           "value": "stacked",
-          "title": "竖排"
+          "title": "一列"
         },
         {
           "value": "linear",
-          "title": "横排"
+          "title": "一行"
         }
       ],
       "default": "stacked",
