@@ -85,6 +85,6 @@
 		<string>Latn</string>
 	</array>
 	<key>tsInputMethodIconFileKey</key>
-	<string>RunyanMenuTemplate.png</string>
+	<string>RunyanInputSource.png</string>
 </dict>
 </plist>
