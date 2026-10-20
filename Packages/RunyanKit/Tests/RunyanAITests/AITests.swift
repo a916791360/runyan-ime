@@ -105,6 +105,14 @@ struct PolishTests {
         #expect(variants == [.init(label: "润色", text: "我们明天开会。"), .init(label: "正式", text: "我们将于明日召开会议。")])
     }
 
+    @Test func parsesFourRegistersIncludingPlain() async throws {
+        let reply = """
+        {"polished":"我们明天开会。","plain":"明天开会吧。","formal":"我们将于明日召开会议。","concise":"明天开会。"}
+        """
+        let variants = try await TextPolisher(provider: MockProvider(reply: reply)).polish("我们明天开个会")
+        #expect(variants.map(\.label) == ["润色", "自然语言", "正式", "简洁"])
+    }
+
     @Test func rejectsOversizedSelectionWithoutCallingTheModel() async {
         await #expect(throws: AIError.self) {
             try await TextPolisher(provider: MockProvider(reply: "{}")).polish(String(repeating: "字", count: 2001))

@@ -19,9 +19,28 @@ public struct TextPolisher: Sendable {
     public init(provider: any AIProvider) { self.provider = provider }
 
     static let instructions = """
-    你是中文写作助手。用户会给你一段他自己选中的文字，请给出三个改写版本，保持原意和语言（中文仍用中文，英文仍用英文），
-    不要添加原文没有的事实，不要解释。严格只输出 JSON：
-    {"polished":"更通顺自然、修正错别字和标点","formal":"更正式书面","concise":"更简洁"}
+    你是中文编辑。用户给你一段自己写的文字，你要给四个改写版本，四版互不重复。
+
+    润色：只改错别字、标点和明显病句。不要改成书面语，不要换句式，语序、语气、用词习惯都保留，改完像同一个人写的；原文通顺时可以几乎不改。
+    自然语言：改成人话。拆掉长句和套娃从句，去掉书面腔和名词化说法（「进行优化」→「改一改」），被动改主动，一句话说一件事，像当面跟同事解释。不用比喻和感叹，信息点一个不少。
+    正式：像写给客户或同事的邮件。用「目前、需要、建议、请确认」这类中性说法，句子完整，一句话说一件事。不要为了显得正式而生造词，不要保留原文的小标题结构（「xxx：」）。
+    简洁：删掉可有可无的字，但一句仍是完整句子——保留主语和必要的「的/了」，不要压成电报。
+
+    四条通用：
+    - 保留原意、事实、专有名词与术语（JSON、token 这类原样保留）
+    - 不加原文没有的内容，不加开头总起句，不加结尾总结
+    - 中文仍写中文，英文仍写英文
+    - 不要用：进一步、进行、予以、相关、切实、一定程度上
+
+    示例——
+    输入：这个功能我试了下，有点卡，你看能不能弄一下。
+    润色：这个功能我试了一下，有点卡，你看能不能处理一下。
+    自然语言：这个功能我试过，有点卡，你看能不能改一下。
+    正式：功能试用后出现卡顿，麻烦你安排处理。
+    简洁：功能有卡顿，麻烦处理一下。
+
+    严格只输出 JSON：
+    {"polished":"…","plain":"…","formal":"…","concise":"…"}
     """
 
     public func polish(_ text: String) async throws -> [Variant] {
@@ -37,7 +56,7 @@ public struct TextPolisher: Sendable {
               let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
         else { throw AIError.badResponse(String(reply.prefix(120))) }
         var seen: Set<String> = [original]
-        return [("polished", "润色"), ("formal", "正式"), ("concise", "简洁")].compactMap { key, label in
+        return [("polished", "润色"), ("plain", "自然语言"), ("formal", "正式"), ("concise", "简洁")].compactMap { key, label in
             guard let value = (object[key] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines),
                   !value.isEmpty, seen.insert(value).inserted else { return nil }
             return Variant(label: label, text: value)
