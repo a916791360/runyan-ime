@@ -238,8 +238,6 @@ final class SettingsModel {
 
     var colorSchemes: [(id: String, name: String)] { PanelTheme.schemeNames(in: previewFrontend) }
 
-    static let customSchemeID = "runyan_custom"
-
     // MARK: - Theme links (runyan-ime://theme, docs/themes.md)
 
     /// Links waiting for confirmation, shown one at a time.

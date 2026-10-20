@@ -16,7 +16,8 @@ final class RunyanInputController: IMKInputController {
     /// Unmasked flags of the last modifier event: device bits tell ⌥ left from right.
     private var lastDeviceFlags: UInt = 0
     private var appOptions = InputEngine.AppOptions()
-    private var bundleID: String?
+    /// 当前输入框所属 App。诊断日志里要带出来，所以不做 private。
+    var bundleID: String?
     private var hasMarkedText = false
     private(set) var isComposing = false
     /// 光标左右各是什么字符，在拼字开始前抄一份。
@@ -144,6 +145,8 @@ final class RunyanInputController: IMKInputController {
     private func activate(client: (any IMKTextInput)?) {
         DebugLog.write("activate client=\(client?.bundleIdentifier() ?? "?")")
         engine.activeController = self
+        // 新输入框：上一个输入框的落点不能沿用。
+        engine.panel.forgetAnchor()
         engine.refreshTheme()
         bundleID = client?.bundleIdentifier()
         appOptions = engine.appOptions(for: bundleID)

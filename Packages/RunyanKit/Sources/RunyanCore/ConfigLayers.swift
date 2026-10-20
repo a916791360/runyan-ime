@@ -258,6 +258,7 @@ public struct ConfigLayers: Sendable {
     /// `markDeployed()` so failed deployments remain retryable.
     @discardableResult
     public func prepareForDeploy(extraTargets: [ConfigTarget] = []) throws -> [String] {
+        migrateAwayCustomScheme()
         migrateStyleOverrides()
         migrateSpellingVariants()
         // Vocabulary tables (bundled + subscribed) are regenerated only when their inputs changed.
@@ -290,6 +291,23 @@ public struct ConfigLayers: Sendable {
 
     /// Visual settings made in Runyan Settings live under `style/runyan/*` (they win over the
     /// color scheme). Older versions wrote them to `style/*`; move those once.
+    /// 0.1.x 早期有过「基于当前配色自定义」，会往生成层写一个 `runyan_custom` 配色。
+    /// 功能删掉之后数据还留着，配色画廊里就多出一张「我的配色」。
+    /// 这里清掉它，并把指向它的 color_scheme(_dark) 换回内置默认。
+    func migrateAwayCustomScheme() {
+        let prefix = "preset_color_schemes/runyan_custom"
+        guard let patch = try? generatedPatch(.frontend),
+              patch.contains(where: { $0.key == prefix || $0.key.hasPrefix(prefix + "/") }) else { return }
+        try? updateGenerated(.frontend) { patch in
+            patch.removeAll { $0.key == prefix || $0.key.hasPrefix(prefix + "/") }
+            for (key, fallback) in [("style/color_scheme", "runyan_light"), ("style/color_scheme_dark", "runyan_dark")] {
+                guard let index = patch.firstIndex(where: { $0.key == key }),
+                      patch[index].value.stringValue == "runyan_custom" else { continue }
+                patch[index] = .init(key, .string(fallback))
+            }
+        }
+    }
+
     func migrateStyleOverrides() {
         let moved = SettingCatalog.bundled.settings
             .filter { $0.file == "frontend" && $0.keypath.hasPrefix("style/runyan/") }

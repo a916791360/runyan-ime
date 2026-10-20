@@ -44,14 +44,6 @@ struct AppearanceView: View {
                 SchemeGallery(dark: dark)
             }
 
-            if model.previewFrontend.value(at: "style/color_scheme")?.stringValue == SettingsModel.customSchemeID {
-                Section("我的配色") {
-                    ForEach(model.catalog.settings(in: "appearance").filter { $0.keypath.hasPrefix("preset_color_schemes/runyan_custom/") }) {
-                        SettingRow(setting: $0)
-                    }
-                }
-            }
-
             Section("布局") {
                 rows(["appearance.candidate_list_layout", "appearance.inline_preedit", "appearance.inline_candidate",
                       "appearance.translucency", "appearance.alpha"])

@@ -10,7 +10,8 @@ public struct ThemePackage: Codable, Sendable, Equatable {
     public static let maxBytes = 4096
     /// Qualified ("Runyan input method") so no other app claims it (a bare `runyan` is a common word).
     public static let urlScheme = "runyan-ime"
-    /// Settings' editable 「我的配色」; never replaced by an import.
+    /// 早期「我的配色」用过的 ID。功能已删，但这个 ID 仍保留：
+    /// 老用户的生成层里可能还留着同名配色，导入时不要撞上。
     public static let reservedID = "runyan_custom"
     public static let colorKeys = [
         "back_color", "border_color", "preedit_back_color", "text_color", "hilited_text_color",
@@ -67,7 +68,7 @@ public struct ThemePackage: Codable, Sendable, Equatable {
             case .format: "不是 runyan-theme 格式"
             case let .version(v): "不支持的主题版本 \(v)，请更新 Runyan"
             case let .id(id): "主题 ID「\(id)」不合规（小写字母开头，2–32 位字母、数字或下划线）"
-            case .reserved: "不能导入为「我的配色」"
+            case .reserved: "这个主题 ID 是保留的，换一个再导入"
             case .name: "主题名称需为 1–40 个字符"
             case let .colors(keys): "颜色缺失或格式不对：\(keys.joined(separator: "、"))"
             case let .layout(keys): "布局数值超出范围：\(keys.joined(separator: "、"))"

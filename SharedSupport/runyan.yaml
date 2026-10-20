@@ -210,7 +210,7 @@ preset_color_schemes:
     hilited_comment_text_color: 0xFF3B4252
     hilited_candidate_label_color: 0xFF3B4252
   paper:
-    name: "纸墨（竖排适用）"
+    name: "纸墨"
     author: Runyan
     color_format: argb
     back_color: 0xFAFAF7F0

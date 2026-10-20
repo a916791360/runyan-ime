@@ -76,6 +76,11 @@ final class InputEngine {
         try? fm.createDirectory(at: paths.userDataDir, withIntermediateDirectories: true)
         try? fm.createDirectory(at: paths.logDir, withIntermediateDirectories: true)
 
+        // 排查「面板跑到屏幕角上」时，日志里能看到每次 show 的锚点与落点。
+        panel.showTrace = { [weak self] message in
+            DebugLog.write("\(message) bundle=\(self?.activeController?.bundleID ?? "-")")
+        }
+
         let engine = RimeEngine.shared
         engine.notificationHandler = { [weak self] in self?.handle($0) }
         // Never block startup on the lock: if a CLI deploy is running, just load what

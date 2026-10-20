@@ -16,6 +16,10 @@ public final class CandidatePanel {
     private let effect = NSVisualEffectView()
     private let signposter = OSSignposter(subsystem: "app.runyan.ime", category: "panel")
     private var lastCursorRect: NSRect = .zero
+    /// 上次隐藏的时刻。紧跟隐藏又弹出时不重播出现动画，否则看着像在闪。
+    private var hiddenAt: Date = .distantPast
+    /// 排查用：把每次 show 的锚点与落点交给外部（DebugLog）。不设置则什么都不做。
+    public var showTrace: ((String) -> Void)?
     private let container = NSView()
     /// Rounded background + shadow.
     private let background = CALayer()
@@ -95,7 +99,15 @@ public final class CandidatePanel {
 
         let appearing = !window.isVisible
         if appearing || screenFrames.isEmpty { screenFrames = NSScreen.screens.map { ($0.frame, $0.visibleFrame) } }
-        if cursorRect != .zero { lastCursorRect = cursorRect }
+        // 有些输入框在「没有光标信息」时会回一个占位矩形（原点在屏幕原点、或者尺寸为 0）。
+        // 拿它当锚点，面板就贴到屏幕左下角 —— 看起来像「输入法在屏幕左边闪」。
+        if let anchor = Self.usableCursorRect(cursorRect) {
+            lastCursorRect = anchor
+        } else if Self.usableCursorRect(lastCursorRect) == nil {
+            // 一次都没拿到过可信位置：跟着鼠标走，总比贴在屏幕角上强。
+            let mouse = NSEvent.mouseLocation
+            lastCursorRect = NSRect(x: mouse.x, y: mouse.y, width: 1, height: 18)
+        }
         // One candidate: never wider than the theme's limit or 60 % of the screen the cursor
         // is on. A whole row may use up to 90 % of that screen.
         let screenWidth = (screenFrames.first { $0.frame.contains(lastCursorRect.origin) } ?? screenFrames.first)?.visible.width ?? 1440
@@ -117,6 +129,7 @@ public final class CandidatePanel {
         let content = position(for: size, cursor: lastCursorRect)
         let frame = NSRect(x: content.minX - margin, y: content.maxY + margin - capacity.height,
                            width: capacity.width, height: capacity.height)
+        showTrace?("panel n=\(state.candidates.count) cursor=\(Self.describe(lastCursorRect)) at=\(Self.describe(frame)) appearing=\(appearing)")
         if window.frame.size != frame.size {
             window.setFrame(frame, display: false)
             container.frame = NSRect(origin: .zero, size: capacity)
@@ -165,7 +178,9 @@ public final class CandidatePanel {
         if appearing {
             window.alphaValue = 1
             window.orderFrontRegardless()
-            if motionAllowed { playAppear() }
+            // 刚藏起来又弹出来（同一串按键里 hide → show）不重播出现动画：
+            // 150 毫秒闪一下，看着就是「面板在闪」。
+            if motionAllowed, Date().timeIntervalSince(hiddenAt) > 0.25 { playAppear() }
         }
     }
 
@@ -426,6 +441,7 @@ public final class CandidatePanel {
     public var windowSize: NSSize { window.frame.size }
 
     public func hide() {
+        hiddenAt = Date()
         container.layer?.removeAllAnimations()
         for layer in [background, effectMask, textMask] { layer.removeAllAnimations() }
         view.layer?.removeAllAnimations()
@@ -435,6 +451,28 @@ public final class CandidatePanel {
         pendingTransition = nil
         contentFrame = .zero
         if window.isVisible { window.orderOut(nil) }
+    }
+
+    /// 换了输入框就忘掉上一次的落点。留着它，新输入框要是给不出可选光标（占位值），
+    /// 面板就会停在上一个应用的位置 —— 看起来像「跑到了别处」。
+    public func forgetAnchor() {
+        lastCursorRect = .zero
+    }
+
+    /// 可信的光标矩形：非零原点、尺寸有限、并且确实落在某块屏幕上。
+    ///
+    /// 有些输入框在「没有光标信息」时会回一个占位值（原点在 (0,0)、尺寸 0 或 1×0），
+    /// 拿它当锚点，面板就贴到屏幕左下角 —— 用户看到的是「输入法在屏幕左侧闪」。
+    static func describe(_ rect: NSRect) -> String {
+        "\(Int(rect.origin.x)),\(Int(rect.origin.y)) \(Int(rect.width))x\(Int(rect.height))"
+    }
+
+    static func usableCursorRect(_ rect: NSRect) -> NSRect? {
+        guard rect != .zero, rect.origin != .zero,
+              rect.width.isFinite, rect.height.isFinite,
+              rect.width > 0 || rect.height > 0 else { return nil }
+        guard NSScreen.screens.contains(where: { $0.frame.insetBy(dx: -4, dy: -4).intersects(rect) }) else { return nil }
+        return rect
     }
 
     /// Content rectangle below the cursor, flipped above when it would leave the
