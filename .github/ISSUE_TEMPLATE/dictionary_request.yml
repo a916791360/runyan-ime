@@ -5,8 +5,8 @@ body:
   - type: markdown
     attributes:
       value: |
-        Package management and runyan_tech_2026 are Roadmap. Public availability does not establish redistribution permission.
-        词库管理与 runyan_tech_2026 仍属 Roadmap；公开可下载不代表允许再分发。
+        Package management is Roadmap. Public availability does not establish redistribution permission.
+        词库管理与订阅仍属 Roadmap；公开可下载不代表允许再分发。
         Never upload a personal word-frequency database or private text corpus. / 禁止上传个人词频库或私人语料。
   - type: checkboxes
     id: preflight

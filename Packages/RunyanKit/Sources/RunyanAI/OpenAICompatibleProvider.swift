@@ -172,7 +172,7 @@ public struct CredentialStore: Sendable {
     @discardableResult
     public func migrateFromKeychain() -> Bool {
         guard read() == nil else { return false }
-        for service in ["app.runyan.ime.ai", "dev.luolei.runyan.ai"] {
+        for service in ["app.runyan.ime.ai"] {
             let query: [String: Any] = [kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: service,
                                         kSecAttrAccount as String: account]
             var lookup = query

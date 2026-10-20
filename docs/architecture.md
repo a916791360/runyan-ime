@@ -48,7 +48,7 @@ flowchart LR
   Helpers/runyan                    CLI（不能放 MacOS/：文件系统大小写不敏感，会覆盖 Runyan）
   Applications/Runyan Settings.app  设置
   Frameworks/librime.1.dylib + rime-plugins/
-  SharedSupport/                  只读数据：雾凇拼音、OpenCC、runyan.yaml、runyan/defaults、runyan_tech.txt
+  SharedSupport/                  只读数据：雾凇拼音、OpenCC、runyan.yaml、runyan/defaults、符号表与表情数据
 
 ~/Library/Runyan/Rime/              用户目录（librime user_data_dir）
   default.custom.yaml …           由 Runyan 合成的补丁（勿手改）

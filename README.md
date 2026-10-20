@@ -5,7 +5,29 @@
 
 **打字时顺手把话说明白。** 一个 macOS 中文输入法：拼音输入在本机完成，AI 只在你按下快捷键的那一刻介入，把刚打出的那句话改得更得体——不打断思路，也不改变你的语气。
 
-> 个人项目，作者 [@a916791360](https://github.com/a916791360)。拼音引擎基于开源项目 [librime](https://github.com/rime/librime)，产品设计、交互与工程实现由本仓库维护。
+> 个人项目，作者 [@a916791360](https://github.com/a916791360)。拼音引擎基于开源项目 [librime](https://github.com/rime/librime)。
+>
+> 本项目是 [AIME](https://github.com/zoolapp/aime)（MIT）的二次开发：输入法外壳、设置面板、候选窗与 lua/词库生态继承自它，
+> 润言在其上重做了品牌、外观、中英混排整形与 AI 动作流程。上游版权声明保留在 [LICENSE](LICENSE) 里，见[第三方声明](THIRD_PARTY_NOTICES.md)。
+
+---
+
+## 下载与安装
+
+下载页：[Releases](https://github.com/a916791360/runyan-ime/releases/latest) → `Runyan-<版本>.zip`，解压后把 `Runyan.app` 拖进 `~/Library/Input Methods/`：
+
+```bash
+open ~/Library/Input\ Methods      # 没有这个文件夹就先建一个
+```
+
+然后**注销重登一次**，让系统扫到新的输入法；登录后在「系统设置 › 键盘 › 输入法」里点 ＋ 添加「润言」。
+
+> **会被 Gatekeeper 拦一次，这是正常的。**
+> 安装包用 Apple Development 证书签名，**没有做公证**（公证需要付费开发者账号）。
+> 首次打开会提示「无法验证开发者」：去「系统设置 › 隐私与安全性」，
+> 在底部点「仍要打开」，再确认一次即可。之后不再询问。
+> 如果提示「已损坏」，是下载时带的隔离标记，执行一次：
+> `xattr -dr com.apple.quarantine ~/Library/Input\ Methods/Runyan.app`
 
 ---
 
