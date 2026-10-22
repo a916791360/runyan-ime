@@ -412,15 +412,11 @@ final class RunyanInputController: IMKInputController {
 
     // MARK: - Draft layer (输入图层)
 
-    /// 英文模式（ascii_mode 开着）——「不使用输入法」的典型状态。
-    var inEnglishMode: Bool { liveSession?.option("ascii_mode") == true }
-
-    /// 长按呼出菜单的门槛：正在中文模式，并且手上有活儿——正在拼字、有草稿，
-    /// 或者光标位置拿得到（在文本框里）。都不是就别弹：那时候长按 ⌥ 多半是在用别的快捷键。
+    /// 长按呼出菜单的门槛：手上有活儿——正在拼字、有草稿，或者光标位置拿得到（在文本框里）。
+    /// 中英文模式都一样：不在文本框里长按 ⌥，多半是在用别的快捷键，弹菜单很烦人。
     /// 个别 App 报不出光标位置，但只要在拼字或有草稿就算「在用」，不至于在终端里永远打不开。
     var canOpenMenuOnHold: Bool {
-        guard !inEnglishMode else { return false }
-        return isComposing || !draft.isEmpty || cursorRect() != .zero
+        isComposing || !draft.isEmpty || cursorRect() != .zero
     }
 
     /// The layer is on for this field: enabled in Settings, and the app is not one where
