@@ -14,14 +14,24 @@ extension RunyanInputController {
 
     /// Starts the hold timer; when the modifier is still held on its own afterwards, the
     /// menu opens (or closes, if it is already open).
+    ///
+    /// 只在「真的在用输入法」时才弹（见 `canOpenMenuOnHold`）：英文模式、或者根本不在文本框里，
+    /// 长按 ⌥ 多半是在用别的快捷键，弹个菜单很烦人。门槛不通过时状态机照常走完——
+    /// 松手要被吃掉，否则 librime 会把单按 ⌥ 当成一次 tap 去切中英文。
     func scheduleMenuHold(token: Int) {
         // While the key is held a ring fills around the Runyan button: the menu grows from there.
-        if quickMenu == nil { InputEngine.shared.panel.showHoldCue(duration: ModifierHold.duration) }
+        if canOpenMenuOnHold, quickMenu == nil {
+            InputEngine.shared.panel.showHoldCue(duration: ModifierHold.duration)
+        }
         Task { @MainActor [weak self] in
             try? await Task.sleep(for: .seconds(ModifierHold.duration))
             guard let self, InputEngine.shared.activeController === self else { return }
             guard self.menuHold.fire(token: token) else {
                 if !self.menuHold.isArmed { InputEngine.shared.panel.hideHoldCue(animated: true) }
+                return
+            }
+            guard self.canOpenMenuOnHold else {
+                InputEngine.shared.panel.hideHoldCue(animated: true)
                 return
             }
             // Holding again while the menu is open keeps it open: keys pressed with the
