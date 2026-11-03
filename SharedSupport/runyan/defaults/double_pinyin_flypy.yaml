@@ -1,0 +1,6 @@
+# Runyan defaults for 小鹤双拼 (double_pinyin_flypy).
+patch:
+  translator/enable_user_dict: true
+  translator/enable_encoder: true
+  translator/encode_commit_history: true
+  translator/enable_sentence: true

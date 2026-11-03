@@ -233,4 +233,107 @@ extension RimeKitTests {
         let sync = workspace.user.appendingPathComponent("sync")
         #expect(FileManager.default.fileExists(atPath: sync.path))
     }
+
+    @Test func userFirstFilterPrioritizesSelectedCandidate() throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent("runyan-userfirst-\(UUID().uuidString)")
+        let shared = root.appendingPathComponent("shared")
+        let user = root.appendingPathComponent("user")
+        let luaDir = shared.appendingPathComponent("lua")
+        let fm = FileManager.default
+        try fm.createDirectory(at: luaDir, withIntermediateDirectories: true)
+        try fm.createDirectory(at: user, withIntermediateDirectories: true)
+
+        let filterSrc = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .appendingPathComponent("SharedSupport/lua/user_first_filter.lua")
+        try fm.copyItem(at: filterSrc, to: luaDir.appendingPathComponent("user_first_filter.lua"))
+
+        let defaultYAML = """
+        config_version: "test"
+        schema_list:
+          - schema: uf_test
+        menu:
+          page_size: 5
+        """
+        let schemaYAML = """
+        schema:
+          schema_id: uf_test
+          name: 记忆测试
+          version: "1"
+        engine:
+          processors:
+            - ascii_composer
+            - key_binder
+            - speller
+            - punctuator
+            - selector
+            - navigator
+            - express_editor
+          segmentors:
+            - ascii_segmentor
+            - matcher
+            - abc_segmentor
+            - punct_segmentor
+            - fallback_segmentor
+          translators:
+            - script_translator
+          filters:
+            - lua_filter@*user_first_filter
+        speller:
+          alphabet: zyxwvutsrqponmlkjihgfedcba
+          delimiter: " '"
+        translator:
+          dictionary: uf_test
+          enable_user_dict: true
+          enable_encoder: true
+          encode_commit_history: true
+          enable_sentence: true
+        """
+        let dictYAML = """
+        ---
+        name: uf_test
+        version: "1"
+        sort: by_weight
+        ...
+        一\tyi\t1000
+        乙\tyi\t500
+        以\tyi\t100
+        一起\tyi qi\t2000
+        """
+        try defaultYAML.write(to: shared.appendingPathComponent("default.yaml"), atomically: true, encoding: .utf8)
+        try schemaYAML.write(to: shared.appendingPathComponent("uf_test.schema.yaml"), atomically: true, encoding: .utf8)
+        try dictYAML.write(to: shared.appendingPathComponent("uf_test.dict.yaml"), atomically: true, encoding: .utf8)
+
+        let engine = RimeEngine.shared
+        engine.finalize()
+        engine.initialize(RimeTraits(sharedDataDir: shared, userDataDir: user, minLogLevel: 2))
+        engine.deployAndWait()
+
+        let session1 = try engine.createSession()
+        session1.simulate(keySequence: "yi")
+        let firstRound = session1.context().candidates.map(\.text)
+        #expect(firstRound.first == "一")
+        let targetIndex = try #require(firstRound.firstIndex(of: "以"))
+        #expect(targetIndex > 0)
+        session1.selectCandidate(onCurrentPage: targetIndex)
+        _ = session1.consumeCommit()
+
+        // Second time typing "yi": "以" must be promoted to the first candidate!
+        let session2 = try engine.createSession()
+        session2.simulate(keySequence: "yi")
+        let secondRound = session2.context().candidates.map(\.text)
+        #expect(secondRound.first == "以")
+
+        // Typing a longer multi-syllable word "yiqi": "一起" MUST be first, "以" must NOT hijack candidate 1!
+        let session3 = try engine.createSession()
+        session3.simulate(keySequence: "yiqi")
+        let thirdRound = session3.context().candidates.map(\.text)
+        #expect(thirdRound.first == "一起")
+
+        engine.finalize()
+    }
 }

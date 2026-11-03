@@ -77,18 +77,29 @@ enum CaretMover {
         let defaults = UserDefaults.standard
         guard defaults.string(forKey: stateKey) != path else { return }
         defaults.set(path, forKey: stateKey)
+        DistributedNotificationCenter.default().post(name: ShapingBridge.caretStateChanged, object: nil)
     }
 
     /// 打出左括号却因为「挪不了光标」没补右括号时记一笔。
     /// 设置面板据此提示去授权 —— 不然用户只会看到「怎么只出了一个括号」。
     static func recordUnavailable() { note("none") }
 
+    /// 刷新并同步辅助功能授权状态。
+    @discardableResult
+    static func refreshTrustState() -> Bool {
+        let trusted = isTrusted
+        if trusted {
+            note("event")
+        }
+        return trusted
+    }
+
     /// 让系统弹出「授权辅助功能」的提示。
     ///
     /// 必须由输入法进程自己调用：TCC 按进程记权限，设置面板替它要没用。
     /// 设置面板发一条分布式通知过来，这里收到再弹。
     static func requestAccessibility() {
-        guard !isTrusted else { return }
+        if refreshTrustState() { return }
         // 这里用字面量而不是 `kAXTrustedCheckOptionPrompt`：那是全局 var，
         // Swift 6 的严格并发不允许在 MainActor 之外直接引用。
         let options = ["AXTrustedCheckOptionPrompt": true] as CFDictionary

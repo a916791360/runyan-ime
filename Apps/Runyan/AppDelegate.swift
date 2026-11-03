@@ -7,6 +7,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         InputEngine.shared.start()
+        CaretMover.refreshTrustState()
         // 设置面板没法替输入法要「辅助功能」权限（TCC 按进程记），只能由这里弹提示。
         DistributedNotificationCenter.default().addObserver(
             forName: CaretMover.requestNotification, object: nil, queue: .main

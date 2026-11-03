@@ -14,13 +14,14 @@
 
 ## 下载与安装
 
-下载页：[Releases](https://github.com/a916791360/runyan-ime/releases/latest) → `Runyan-<版本>.zip`，解压后把 `Runyan.app` 拖进 `~/Library/Input Methods/`：
+下载页：[Releases](https://github.com/a916791360/runyan-ime/releases/latest)
 
-```bash
-open ~/Library/Input\ Methods      # 没有这个文件夹就先建一个
-```
+- **推荐方案（DMG 镜像安装）**：
+  下载 `Runyan-v<版本>.dmg`，双击打开后，将 `Runyan.app` 拖入窗口中的 `Input Methods` 文件夹替身即可。
+- **便携方案（ZIP 压缩包）**：
+  下载 `Runyan-v<版本>.zip`，解压后把 `Runyan.app` 拷贝到 `~/Library/Input Methods/` 或 `/Library/Input Methods/`。
 
-然后**注销重登一次**，让系统扫到新的输入法；登录后在「系统设置 › 键盘 › 输入法」里点 ＋ 添加「润言」。
+安装后**注销重登一次**（或重启），让系统加载新的输入法；登录后在「系统设置 › 键盘 › 文本输入（输入法）」里点击 ＋ 号添加「润言」。
 
 > **会被 Gatekeeper 拦一次，这是正常的。**
 > 安装包用 Apple Development 证书签名，**没有做公证**（公证需要付费开发者账号）。
@@ -132,7 +133,6 @@ docs/                   架构、隐私、配置参考、排障
 - [x] 词库订阅与方案包管理（固定版本 + SHA-256）
 - [x] 快捷菜单、AI 润色 / 翻译 / 自定义动作、输入图层
 - [x] 输入统计、首次引导、本地备份与恢复
-- [ ] 场景感知（按 App 自动选语气）
 - [ ] 风格卡片：从你改过的句子里学措辞偏好，不微调模型
 - [ ] 候选窗翻页指示与竖排优化
 

@@ -37,6 +37,9 @@ public final class CandidatePanel {
 
     /// Motion is on unless the user asked to reduce it. Tests switch it off.
     public var animationsEnabled = true
+    /// Whether the panel should bring its NSWindow to the front of the display.
+    /// In test environments or headless benchmarks, this defaults to false to prevent popups.
+    public var ordersFront: Bool
     private var motionAllowed: Bool {
         animationsEnabled && !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
     }
@@ -56,6 +59,13 @@ public final class CandidatePanel {
     public var isVisible: Bool { window.isVisible }
 
     public init() {
+        let isTesting = ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
+            || ProcessInfo.processInfo.processName.contains("Test")
+            || ProcessInfo.processInfo.processName.contains("xctest")
+            || Bundle.main.bundlePath.contains("Test")
+            || Bundle.main.bundlePath.hasSuffix(".xctest")
+        ordersFront = !isTesting
+
         window = NSPanel(contentRect: .zero, styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: true)
         window.level = NSWindow.Level(rawValue: Int(CGWindowLevelForKey(.cursorWindow)) - 1)
         window.backgroundColor = .clear
@@ -187,7 +197,9 @@ public final class CandidatePanel {
         lastShownState = state
         if appearing {
             window.alphaValue = 1
-            window.orderFrontRegardless()
+            if ordersFront {
+                window.orderFrontRegardless()
+            }
             // 刚藏起来又弹出来（同一串按键里 hide → show）不重播出现动画：
             // 150 毫秒闪一下，看着就是「面板在闪」。
             if motionAllowed, Date().timeIntervalSince(hiddenAt) > 0.25 { playAppear() }

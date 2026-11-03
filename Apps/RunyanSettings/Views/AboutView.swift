@@ -16,7 +16,7 @@ struct AboutView: View {
                 version
                 projectLinks
                 licenses
-                Text("© 2026 杨冉. 感谢 RIME 与开源社区。")
+                Text("© 2026 润言. 感谢 RIME 与开源社区。")
                     .font(.caption)
                     .foregroundStyle(Theme.secondaryText)
                     .frame(maxWidth: .infinity)
@@ -44,17 +44,28 @@ struct AboutView: View {
     private var version: some View {
         Card {
             VStack(alignment: .leading, spacing: 16) {
-                HStack(alignment: .firstTextBaseline, spacing: 12) {
+                HStack(alignment: .center, spacing: 12) {
                     Text("版本 \(model.currentVersion.string)")
                         .font(.title2.weight(.semibold))
                         .foregroundStyle(Theme.text)
                         .textSelection(.enabled)
-                    Spacer(minLength: 0)
                     if isDevelopmentBuild {
                         Text("开发版")
                             .font(.caption.weight(.medium))
                             .foregroundStyle(Theme.secondaryText)
                     }
+                    Spacer(minLength: 0)
+                    Button {
+                        Task { await model.checkGitHubUpdates(userInitiated: true) }
+                    } label: {
+                        if model.updateChecking {
+                            ProgressView().controlSize(.small)
+                        } else {
+                            Text("检查更新")
+                        }
+                    }
+                    .disabled(model.updateChecking)
+                    .controlSize(.small)
                 }
                 Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 10) {
                     if let build = model.currentVersion.build {
@@ -82,6 +93,12 @@ struct AboutView: View {
                 }
                 .font(.callout)
                 .foregroundStyle(Theme.secondaryText)
+
+                if let notice = model.updateNotice {
+                    Text(notice)
+                        .font(.caption)
+                        .foregroundStyle(Theme.secondaryText)
+                }
             }
             .padding(20)
         }

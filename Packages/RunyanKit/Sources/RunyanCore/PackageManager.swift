@@ -180,13 +180,42 @@ public struct PackageManager: Sendable {
     public func manifestURL(_ id: String) -> URL { paths.packagesDir.appendingPathComponent("\(id).json") }
 
     public func installed(_ id: String) -> InstalledPackage? {
-        guard let data = try? Data(contentsOf: manifestURL(id)) else { return nil }
-        return try? Self.decoder.decode(InstalledPackage.self, from: data)
+        if let data = try? Data(contentsOf: manifestURL(id)),
+           let record = try? Self.decoder.decode(InstalledPackage.self, from: data) {
+            return record
+        }
+        // Fallback for shipped default baseline (e.g. rime-ice shipped in SharedSupport)
+        if id == "rime-ice",
+           let shared = paths.sharedDataDir,
+           FileManager.default.fileExists(atPath: shared.appendingPathComponent("rime_ice.schema.yaml").path),
+           let package = registry.package("rime-ice") {
+            let version = (try? String(contentsOf: shared.appendingPathComponent("runyan/VERSION"), encoding: .utf8))?
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+                .components(separatedBy: " ")
+                .last ?? package.version
+            return InstalledPackage(
+                id: package.id,
+                version: version,
+                sha256: package.sha256,
+                installedAt: Date.distantPast,
+                files: [:],
+                backupDir: nil,
+                sourceURL: package.source.downloadURL?.absoluteString,
+                license: package.license,
+                licenseURL: package.licenseURL,
+                attribution: package.attribution
+            )
+        }
+        return nil
     }
 
     public func installedPackages() -> [InstalledPackage] {
         let names = (try? FileManager.default.contentsOfDirectory(atPath: paths.packagesDir.path)) ?? []
-        return names.filter { $0.hasSuffix(".json") }.sorted().compactMap { installed(String($0.dropLast(5))) }
+        var list = names.filter { $0.hasSuffix(".json") }.sorted().compactMap { installed(String($0.dropLast(5))) }
+        if list.isEmpty, let shipped = installed("rime-ice") {
+            list.append(shipped)
+        }
+        return list
     }
 
     // MARK: - Install

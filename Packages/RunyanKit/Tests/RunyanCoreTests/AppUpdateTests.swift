@@ -13,6 +13,23 @@ import Testing
         #expect(!(AppVersion("0.1.0", build: 1) < AppVersion("0.1.0")))
         #expect(!(AppVersion("0.2.0", build: 9) < AppVersion("0.1.0", build: 10)))
         #expect(AppVersion("0.1.0", build: 2).description == "0.1.0 (2)")
+        #expect(AppVersion("v0.1.12") == AppVersion("0.1.12"))
+        #expect(AppVersion("0.1.12") < AppVersion("v0.1.13"))
+    }
+
+    @Test func decodesGitHubRelease() throws {
+        let json = """
+        {
+            "tag_name": "v0.1.13",
+            "name": "润言 0.1.13",
+            "body": "更新内容说明",
+            "html_url": "https://github.com/a916791360/runyan-ime/releases/tag/v0.1.13"
+        }
+        """
+        let release = try JSONDecoder().decode(GitHubRelease.self, from: Data(json.utf8))
+        #expect(release.tagName == "v0.1.13")
+        #expect(release.appVersion == AppVersion("0.1.13"))
+        #expect(AppVersion("0.1.12", build: 15) < release.appVersion)
     }
 
     @Test func ordersPrereleasesUsingSemver() {

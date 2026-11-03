@@ -91,18 +91,8 @@ struct RootView: View {
                 ForEach(Pane.sections, id: \.1) { title, panes in
                     Section(title) {
                         ForEach(panes) { pane in
-                            Label {
-                                Text(pane.title)
-                            } icon: {
-                                Image(systemName: pane.symbol)
-                            }
-                            .foregroundStyle(selection == pane ? AnyShapeStyle(Theme.onAccent) : AnyShapeStyle(.primary))
-                            .listRowBackground(
-                                RoundedRectangle(cornerRadius: 7, style: .continuous)
-                                    .fill(selection == pane ? Theme.accent : .clear)
-                                    .padding(.vertical, 1)
-                            )
-                            .tag(pane)
+                            Label(pane.title, systemImage: pane.symbol)
+                                .tag(pane)
                         }
                     }
                 }
@@ -130,6 +120,11 @@ struct RootView: View {
         .onboardingHost(bypassed: selection == .about)
         .themeImportHost(model)
         .overlay(alignment: .bottom) { ErrorBanner() }
+        .sheet(isPresented: Bindable(model).showingUpdateSheet) {
+            if let release = model.gitHubRelease {
+                UpdateReleaseSheet(release: release)
+            }
+        }
         // The input method's quick menu opens a specific pane in a running Settings app.
         .onReceive(DistributedNotificationCenter.default().publisher(for: .init("app.runyan.inputmethod.zh.settings.showPane"))) { note in
             if let raw = note.userInfo?["pane"] as? String, let pane = Pane(rawValue: raw) {

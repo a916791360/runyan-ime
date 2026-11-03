@@ -12,6 +12,9 @@ public enum ShapingBridge {
     /// 设置请求输入法弹「辅助功能」授权提示。
     public static let requestAccessibility = Notification.Name("app.runyan.ime.requestAccessibility")
 
+    /// 输入法授权状态改变或已刷新的通知。
+    public static let caretStateChanged = Notification.Name("app.runyan.ime.caretStateChanged")
+
     /// 设置读输入法偏好的域（输入法的 bundle id）。两个 App 都没有沙箱，读得到。
     public static let imeDefaultsSuite = "app.runyan.inputmethod.zh"
 }

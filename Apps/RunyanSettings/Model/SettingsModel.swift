@@ -106,6 +106,28 @@ final class SettingsModel {
     var importReport: URL { paths.runyanDir.appendingPathComponent("import-report.json") }
     var hasImported: Bool { FileManager.default.fileExists(atPath: importReport.path) }
 
+    /// Current librime engine version, resolved from shipped support or installation metadata.
+    var librimeVersion: String {
+        _ = revision
+        if let shared = paths.sharedDataDir ?? Bundle.main.sharedSupportURL {
+            let file = shared.appendingPathComponent("runyan/LIBRIME_VERSION")
+            if let ver = try? String(contentsOf: file, encoding: .utf8).trimmingCharacters(in: .whitespacesAndNewlines), !ver.isEmpty {
+                return ver
+            }
+        }
+        let installURL = paths.userDataDir.appendingPathComponent("installation.yaml")
+        if let content = try? String(contentsOf: installURL, encoding: .utf8) {
+            for line in content.split(separator: "\n") {
+                let trimmed = line.trimmingCharacters(in: .whitespaces)
+                if trimmed.starts(with: "rime_version:") {
+                    let ver = trimmed.dropFirst("rime_version:".count).trimmingCharacters(in: .whitespacesAndNewlines)
+                    if !ver.isEmpty { return ver }
+                }
+            }
+        }
+        return "1.17.0"
+    }
+
     // MARK: - Settings
 
     func value(_ setting: SettingCatalog.Setting) -> ConfigValue? {
@@ -769,6 +791,33 @@ final class SettingsModel {
     /// Ad-hoc development builds (install-dev.sh) are not offered releases.
     let isDistributionBuild = AppVersion.isDistributionBuild()
     var pendingUpdate: AppRelease? { isDistributionBuild ? updateState.pending(current: currentVersion) : nil }
+
+    private(set) var gitHubRelease: GitHubRelease?
+    var showingUpdateSheet = false
+
+    func checkGitHubUpdates(userInitiated: Bool = true) async {
+        guard !updateChecking else { return }
+        updateChecking = true
+        defer { updateChecking = false }
+        if userInitiated { updateNotice = nil }
+        do {
+            let checker = GitHubUpdateChecker()
+            if let release = try await checker.check(current: currentVersion) {
+                gitHubRelease = release
+                showingUpdateSheet = true
+                updateNotice = "发现新版本：\(release.tagName)"
+            } else {
+                gitHubRelease = nil
+                if userInitiated {
+                    updateNotice = "已是最新版本 (\(currentVersion.string))"
+                }
+            }
+        } catch {
+            if userInitiated {
+                updateNotice = "检查失败：\(error.localizedDescription)"
+            }
+        }
+    }
 
     /// Reads the shared state and checks when a daily check is due (the input method
     /// usually has done it already).

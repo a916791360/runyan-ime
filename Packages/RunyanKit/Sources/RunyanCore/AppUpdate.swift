@@ -49,7 +49,11 @@ public struct AppVersion: Comparable, Sendable, CustomStringConvertible {
 
     public init(_ version: String, build: Int? = nil) {
         string = version
-        let semantic = version.split(separator: "+", maxSplits: 1).first ?? "0"
+        var cleaned = version.trimmingCharacters(in: .whitespacesAndNewlines)
+        if cleaned.hasPrefix("v") || cleaned.hasPrefix("V") {
+            cleaned.removeFirst()
+        }
+        let semantic = cleaned.split(separator: "+", maxSplits: 1).first ?? "0"
         let components = semantic.split(separator: "-", maxSplits: 1)
         parts = (components.first ?? "0").split(separator: ".").map { Int($0) ?? 0 }
         prerelease = components.count > 1 ? components[1].split(separator: ".").map(String.init) : []
@@ -66,15 +70,13 @@ public struct AppVersion: Comparable, Sendable, CustomStringConvertible {
 
     public var description: String { build.map { "\(string) (\($0))" } ?? string }
 
-    /// Whether this copy was signed by Runyan's team (a release), not an ad-hoc development
-    /// build. Development builds skip the automatic check and never offer an "update".
+    /// Whether this copy is a distribution/release build rather than a development/debug build.
     public static func isDistributionBuild(_ bundle: Bundle = .main) -> Bool {
-        var code: SecStaticCode?
-        guard SecStaticCodeCreateWithPath(bundle.bundleURL as CFURL, [], &code) == errSecSuccess, let code else { return false }
-        var info: CFDictionary?
-        guard SecCodeCopySigningInformation(code, SecCSFlags(rawValue: kSecCSSigningInformation), &info) == errSecSuccess,
-              let dictionary = info as? [String: Any] else { return false }
-        return dictionary[kSecCodeInfoTeamIdentifier as String] as? String == AppUpdateChecker.teamID
+        #if DEBUG
+        return false
+        #else
+        return !current(bundle).isPrerelease
+        #endif
     }
 
     public static func < (lhs: AppVersion, rhs: AppVersion) -> Bool {
@@ -342,5 +344,86 @@ public struct AppUpdateChecker: Sendable {
         var hasher = SHA256()
         while let chunk = try handle.read(upToCount: 1 << 20), !chunk.isEmpty { hasher.update(data: chunk) }
         return hasher.finalize().map { String(format: "%02x", $0) }.joined()
+    }
+}
+
+/// GitHub Release representation from GitHub API.
+public struct GitHubRelease: Codable, Sendable, Equatable, Identifiable {
+    public var id: Int?
+    public var tagName: String
+    public var name: String?
+    public var body: String?
+    public var htmlUrl: URL
+    public var publishedAt: String?
+    public var isPrerelease: Bool?
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case tagName = "tag_name"
+        case name
+        case body
+        case htmlUrl = "html_url"
+        case publishedAt = "published_at"
+        case isPrerelease = "prerelease"
+    }
+
+    public init(id: Int? = nil, tagName: String, name: String? = nil, body: String? = nil, htmlUrl: URL, publishedAt: String? = nil, isPrerelease: Bool? = nil) {
+        self.id = id
+        self.tagName = tagName
+        self.name = name
+        self.body = body
+        self.htmlUrl = htmlUrl
+        self.publishedAt = publishedAt
+        self.isPrerelease = isPrerelease
+    }
+
+    public var appVersion: AppVersion {
+        AppVersion(tagName)
+    }
+
+    public var displayTitle: String {
+        if let name, !name.isEmpty { return name }
+        return tagName
+    }
+}
+
+/// Checks GitHub Releases API for open source updates without Apple Developer certificates.
+public struct GitHubUpdateChecker: Sendable {
+    public static let repo = "a916791360/runyan-ime"
+    public static let apiURL = URL(string: "https://api.github.com/repos/\(repo)/releases/latest")!
+
+    public var session: URLSession
+
+    public init(session: URLSession = .shared) {
+        self.session = session
+    }
+
+    public func fetchLatestRelease() async throws -> GitHubRelease {
+        var request = URLRequest(url: Self.apiURL, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 15)
+        request.setValue("Runyan-IME", forHTTPHeaderField: "User-Agent")
+        request.setValue("application/vnd.github.v3+json", forHTTPHeaderField: "Accept")
+        let (data, response) = try await session.data(for: request)
+        if let http = response as? HTTPURLResponse {
+            if http.statusCode == 404 {
+                throw AppUpdateError.noInstaller
+            }
+            if http.statusCode != 200 {
+                throw AppUpdateError.badResponse(http.statusCode)
+            }
+        }
+        let decoder = JSONDecoder()
+        return try decoder.decode(GitHubRelease.self, from: data)
+    }
+
+    public func check(current: AppVersion) async throws -> GitHubRelease? {
+        do {
+            let latest = try await fetchLatestRelease()
+            if current < latest.appVersion {
+                return latest
+            }
+            return nil
+        } catch AppUpdateError.noInstaller {
+            return nil
+        }
     }
 }

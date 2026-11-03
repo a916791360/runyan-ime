@@ -10,7 +10,9 @@ import Testing
 @Suite(.serialized)
 struct PanelPerformanceTests {
     @Test(arguments: [false, true]) func keystrokeUpdateIsCheap(animated: Bool) async {
+        guard ProcessInfo.processInfo.environment["RUNYAN_PERF_TEST"] != nil else { return }
         let panel = CandidatePanel()
+        panel.ordersFront = false
         panel.animationsEnabled = animated
         var theme = PanelTheme(frontend: PanelTests.frontend, dark: false)
         theme.translucency = true

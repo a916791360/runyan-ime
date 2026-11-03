@@ -153,17 +153,15 @@ private struct PunctuationSection: View {
 /// 中英混排的空格与成对符号。两条都在提交文字那一刻处理，不改写方案配置。
 private struct TextShapingSection: View {
     @Environment(SettingsModel.self) private var model
-
-    /// 输入法进程上一次把光标退回去用的哪条路：`client` / `event` / `none`。
-    ///
-    /// 这个判定只能在输入法进程里做 —— 设置是另一个 App，自己查到的权限说明不了
-    /// 输入法有没有权限。所以由输入法把结果写进它自己的偏好域，这里读过来。
-    private var caretReport: String? {
-        UserDefaults(suiteName: ShapingBridge.imeDefaultsSuite)?.string(forKey: ShapingBridge.caretStateKey)
-    }
+    @State private var caretReport: String? = UserDefaults(suiteName: ShapingBridge.imeDefaultsSuite)?.string(forKey: ShapingBridge.caretStateKey)
 
     private var pairedWithoutPermission: Bool {
         model.features.autoPairBrackets && caretReport == "none"
+    }
+
+    private func refreshCaretReport() {
+        requestAccessibility()
+        caretReport = UserDefaults(suiteName: ShapingBridge.imeDefaultsSuite)?.string(forKey: ShapingBridge.caretStateKey)
     }
 
     var body: some View {
@@ -179,7 +177,7 @@ private struct TextShapingSection: View {
             Toggle(isOn: Binding(get: { model.features.autoPairBrackets },
                                  set: { value in
                                      model.updateFeatures { $0.autoPairBrackets = value }
-                                     if value { requestAccessibility() }
+                                     if value { refreshCaretReport() }
                                  })) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("左括号自动补全")
@@ -196,12 +194,19 @@ private struct TextShapingSection: View {
                             .font(.callout.weight(.medium))
                         Text("输入框不收「左移一格」这条命令，只能补发一个左方向键把光标退到括号中间，这一步需要手动授权：面板里点 ＋，按 ⌘⇧G 粘贴刚复制的路径，选 Runyan.app 打开开关。授权之前只输入左括号，不会出错。")
                             .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-                        Button("复制路径并打开授权面板") {
-                            CaretMoverHelp.copyAppPath()
-                            requestAccessibility()
-                            CaretMoverHelp.openAccessibilitySettings()
+                        HStack(spacing: 8) {
+                            Button("复制路径并打开授权面板") {
+                                CaretMoverHelp.copyAppPath()
+                                requestAccessibility()
+                                CaretMoverHelp.openAccessibilitySettings()
+                            }
+                            .controlSize(.small)
+
+                            Button("我已授权，刷新状态") {
+                                refreshCaretReport()
+                            }
+                            .controlSize(.small)
                         }
-                        .controlSize(.small)
                     }
                 }
             }
@@ -209,6 +214,15 @@ private struct TextShapingSection: View {
             Text("中英混排")
         } footer: {
             Text("这两条只影响润言自己上屏的那一笔，不会去改已经写在输入框里的文字。")
+        }
+        .onAppear {
+            refreshCaretReport()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            refreshCaretReport()
+        }
+        .onReceive(DistributedNotificationCenter.default().publisher(for: ShapingBridge.caretStateChanged)) { _ in
+            caretReport = UserDefaults(suiteName: ShapingBridge.imeDefaultsSuite)?.string(forKey: ShapingBridge.caretStateKey)
         }
     }
 

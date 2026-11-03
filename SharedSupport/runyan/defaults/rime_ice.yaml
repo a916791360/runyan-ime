@@ -3,4 +3,8 @@
 #
 # Subscribed online vocabularies are mounted into every enabled schema as
 # `runyan_online` by SubscriptionManager.ensureTables() before each deploy.
-patch: {}
+patch:
+  translator/enable_user_dict: true
+  translator/enable_encoder: true
+  translator/encode_commit_history: true
+  translator/enable_sentence: true

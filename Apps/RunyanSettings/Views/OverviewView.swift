@@ -52,7 +52,7 @@ struct OverviewView: View {
             Text("可视化管理方案、外观与词库")
                 .font(.title3).foregroundStyle(Theme.secondaryText)
             HStack(spacing: 8) {
-                Tag(text: "librime 1.17", symbol: "cpu")
+                Tag(text: "librime \(model.librimeVersion)", symbol: "cpu")
                 Tag(text: model.enabledSchemas.first.map { "主方案 \($0)" } ?? "尚未部署", symbol: "character.book.closed")
             }
         }
@@ -241,12 +241,29 @@ struct VersionFooter: View {
                     HStack(spacing: 12) { updateControls }
                 }
             }
-            HStack(spacing: 12) {
+            HStack(spacing: 10) {
+                Button {
+                    Task { await model.checkGitHubUpdates(userInitiated: true) }
+                } label: {
+                    if model.updateChecking {
+                        ProgressView().controlSize(.small)
+                    } else {
+                        Text("检查更新")
+                    }
+                }
+                .disabled(model.updateChecking)
+                .controlSize(.small)
+
                 Button("导出诊断信息…") { exportDiagnostics() }
                     .disabled(exporting)
                     .controlSize(.small)
                     .help(Diagnostics.disclosure)
-                if let exportNotice { Text(exportNotice).font(.caption).foregroundStyle(Theme.secondaryText) }
+
+                if let notice = model.updateNotice {
+                    Text(notice).font(.caption).foregroundStyle(Theme.secondaryText)
+                } else if let exportNotice {
+                    Text(exportNotice).font(.caption).foregroundStyle(Theme.secondaryText)
+                }
             }
         }
         .padding(.top, 4)
@@ -256,9 +273,6 @@ struct VersionFooter: View {
         HStack(spacing: 12) {
             Text("润言 \(model.currentVersion.description)\(model.isDistributionBuild ? "" : " · 开发版")")
                 .font(.caption).foregroundStyle(Theme.secondaryText)
-            if let notice = model.updateNotice, model.pendingUpdate == nil {
-                Text(notice).font(.caption).foregroundStyle(Theme.secondaryText)
-            }
         }
         .fixedSize()
     }
