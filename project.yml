@@ -69,6 +69,7 @@ targets:
         tsInputMethodCharacterRepertoireKey: [Hans, Hant, Latn]
         TISInputSourceID: app.runyan.inputmethod.zh
         TICapsLockLanguageSwitchCapable: true
+        TISIconIsTemplate: true
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         ComponentInputModeDict:
@@ -76,12 +77,13 @@ targets:
             app.runyan.inputmethod.zh.hans:
               TISInputSourceID: app.runyan.inputmethod.zh.hans
               TISIntendedLanguage: zh-Hans
+              TISIconIsTemplate: true
               tsInputModeScriptKey: smUnicodeScript
               tsInputModeCharacterRepertoireKey: [Hans, Hant]
               tsInputModeKeyEquivalentModifiersKey: 4608
-              tsInputModeMenuIconFileKey: RunyanMenuTemplate.png
-              tsInputModeAlternateMenuIconFileKey: RunyanMenuTemplate.png
-              tsInputModePaletteIconFileKey: RunyanMenuTemplate.png
+              tsInputModeMenuIconFileKey: RunyanMenuTemplate.pdf
+              tsInputModeAlternateMenuIconFileKey: RunyanMenuTemplate.pdf
+              tsInputModePaletteIconFileKey: RunyanMenuTemplate.pdf
               tsInputModePrimaryInScriptKey: true
               tsInputModeIsVisibleKey: true
               tsInputModeDefaultStateKey: true

@@ -129,7 +129,7 @@ xcrun actool Apps/Shared/Assets.xcassets --compile "$APP/Contents/Resources" \
 ditto "$APP/Contents/Resources/Assets.car" "$SETTINGS_APP/Contents/Resources/Assets.car"
 # 设置 App 自己也要带一份 icns：它被单独启动，Dock 只认自己包里的图标。
 cp "$APP/Contents/Resources/AppIcon.icns" "$SETTINGS_APP/Contents/Resources/AppIcon.icns" 2>/dev/null || true
-cp Apps/Runyan/Resources/*.png "$APP/Contents/Resources/"
+cp Apps/Runyan/Resources/*.png Apps/Runyan/Resources/*.pdf "$APP/Contents/Resources/" 2>/dev/null || true
 cp -R Apps/Runyan/Resources/zh-Hans.lproj Apps/Runyan/Resources/en.lproj "$APP/Contents/Resources/"
 
 # 命令行工具与它自己的资源包
