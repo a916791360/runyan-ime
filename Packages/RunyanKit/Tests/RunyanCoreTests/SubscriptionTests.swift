@@ -58,6 +58,20 @@ struct SubscriptionTests {
         let layers = ConfigLayers(paths: paths)
         #expect(layers.generatedValue(.schema("double_pinyin_flypy"), keypath: "runyan_online")?["user_dict"] == "runyan_online_flypy")
         #expect(layers.generatedValue(.schema("rime_ice"), keypath: "engine/translators/+") == ["table_translator@runyan_online"])
+        #expect(layers.generatedValue(.schema("rime_ice"), keypath: "runyan_online")?["initial_quality"] == 0.5)
+    }
+
+    @Test func rebuildCleansLegacyAimeOnlineMounts() async throws {
+        let layers = ConfigLayers(paths: paths)
+        try layers.updateGenerated(.schema("rime_ice")) { patch in
+            patch.append(.init("aime_online", .map([.init("initial_quality", 6)])))
+            patch.append(.init("engine/translators/+", .list(["table_translator@aime_online"])))
+        }
+        let manager = SubscriptionManager(paths: paths)
+        _ = try manager.rebuild(schemas: ["rime_ice"])
+        #expect(layers.generatedValue(.schema("rime_ice"), keypath: "aime_online") == nil)
+        #expect(layers.generatedValue(.schema("rime_ice"), keypath: "engine/translators/+") == ["table_translator@runyan_online"])
+        #expect(layers.generatedValue(.schema("rime_ice"), keypath: "runyan_online")?["initial_quality"] == 0.5)
     }
 
     @Test func ensureTablesDedupesAndRebuildsOnlyWhenInputsChange() async throws {

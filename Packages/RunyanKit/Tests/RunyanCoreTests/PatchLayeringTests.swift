@@ -62,6 +62,25 @@ struct PatchLayeringTests {
         #expect(built.value(at: "switcher/caption")?.stringValue == "「方案选单」")
     }
 
+    @Test func importedLayerStripsLegacyAimeOnline() throws {
+        let yaml = """
+        patch:
+          engine/translators/+:
+            - table_translator@aime_online
+            - other_translator
+          aime_online:
+            initial_quality: 6
+          keep_this: true
+        """
+        try FileManager.default.createDirectory(at: paths.importedDir, withIntermediateDirectories: true)
+        try yaml.write(to: layers.importedURL(.default), atomically: true, encoding: .utf8)
+        let patch = try layers.importedPatch(.default)
+        #expect(!patch.contains { $0.key == "aime_online" })
+        #expect(patch.contains { $0.key == "keep_this" })
+        let translators = patch.first { $0.key == "engine/translators/+" }?.value.listValue
+        #expect(translators == ["other_translator"])
+    }
+
     @Test func generatedLayerOverridesImported() throws {
         try Self.handWritten.write(to: layers.shimURL(.default), atomically: true, encoding: .utf8)
         try layers.setGenerated(.default, keypath: "menu/page_size", value: 5)

@@ -20,7 +20,7 @@ SETTINGS_APP="$APP/Contents/Applications/Runyan Settings.app"
 IDENTITY="${RUNYAN_SIGN_IDENTITY:--}"
 # 版本号跟 project.yml 的 MARKETING_VERSION / CURRENT_PROJECT_VERSION 保持一致。
 # Xcode 会从工程设置里展开 $(MARKETING_VERSION)，手工组装得自己填。
-VERSION="1.0.0"
+VERSION="1.0.1"
 BUILD_NUMBER="1"
 STAMP="$(date '+%Y-%m-%d %H:%M')"
 

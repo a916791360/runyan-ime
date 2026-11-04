@@ -87,7 +87,18 @@ public struct ConfigLayers: Sendable {
     }
 
     public func defaultsPatch(_ target: ConfigTarget) throws -> [ConfigValue.Entry] { try Self.patchEntries(at: defaultsURL(target)) }
-    public func importedPatch(_ target: ConfigTarget) throws -> [ConfigValue.Entry] { try Self.patchEntries(at: importedURL(target)) }
+    public func importedPatch(_ target: ConfigTarget) throws -> [ConfigValue.Entry] {
+        var entries = try Self.patchEntries(at: importedURL(target))
+        if entries.contains(where: { $0.key == "aime_online" }) {
+            entries.removeAll { $0.key == "aime_online" }
+            if let index = entries.firstIndex(where: { $0.key == "engine/translators/+" }) {
+                let legacyTranslator = ConfigValue.string("table_translator@aime_online")
+                let rest = (entries[index].value.listValue ?? []).filter { $0 != legacyTranslator }
+                if rest.isEmpty { entries.remove(at: index) } else { entries[index].value = .list(rest) }
+            }
+        }
+        return entries
+    }
     public func generatedPatch(_ target: ConfigTarget) throws -> [ConfigValue.Entry] { try Self.patchEntries(at: generatedURL(target)) }
 
     public func generatedValue(_ target: ConfigTarget, keypath: String) -> ConfigValue? {

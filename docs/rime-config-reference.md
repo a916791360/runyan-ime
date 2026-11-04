@@ -249,7 +249,7 @@ catalog: translator.enable_word_completion, translator.spelling_hints, translato
 | `enable_sentence` | 是否组句（table_translator 应关） | melt_eng/cn_en/custom_phrase 均 false |
 | `enable_completion` | 输入中按前缀补全码表词 | cn_en 为 true |
 | `enable_word_completion` | 长词自动补全（librime > 1.11.2） | true |
-| `initial_quality` | 候选初始权重（决定各翻译器间排序） | 主 1.2 / melt_eng 1.1 / cn_en 0.5 / custom_phrase 99 |
+| `initial_quality` | 候选初始权重（决定各翻译器间排序） | 主 1.2 / melt_eng 1.1 / cn_en 0.5 / runyan_online 0.5 / custom_phrase 99 |
 | `spelling_hints` | 候选注释带 N 位拼写提示（corrector 依赖） | 8 |
 | `always_show_comments` | 无注释时也显示编码注释 | true |
 | `preedit_format` | 输入码显示形态换算（v→u 等） | `xform/([jqxy])v/$1u/` 等 4 条 |

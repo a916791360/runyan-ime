@@ -475,12 +475,13 @@ public struct SubscriptionManager: Sendable {
         let layers = ConfigLayers(paths: paths)
         // Schemas whose codes are not pinyin (t9, shape-based, other double pinyin layouts)
         // cannot type these tables; make sure an older mount is gone.
-        for schema in schemas where !Self.canMount(schema) && layers.generatedValue(.schema(schema), keypath: Self.tableName) != nil {
+        for schema in schemas where !Self.canMount(schema) && (layers.generatedValue(.schema(schema), keypath: Self.tableName) != nil || layers.generatedValue(.schema(schema), keypath: "aime_online") != nil) {
             try layers.updateGenerated(.schema(schema)) { patch in
-                patch.removeAll { $0.key == Self.tableName }
+                patch.removeAll { $0.key == Self.tableName || $0.key == "aime_online" }
                 let translator = ConfigValue.string("table_translator@\(Self.tableName)")
+                let legacyTranslator = ConfigValue.string("table_translator@aime_online")
                 if let index = patch.firstIndex(where: { $0.key == "engine/translators/+" }) {
-                    let rest = (patch[index].value.listValue ?? []).filter { $0 != translator }
+                    let rest = (patch[index].value.listValue ?? []).filter { $0 != translator && $0 != legacyTranslator }
                     if rest.isEmpty { patch.remove(at: index) } else { patch[index].value = .list(rest) }
                 }
             }
@@ -488,20 +489,21 @@ public struct SubscriptionManager: Sendable {
         for schema in schemas where Self.canMount(schema) {
             let file = Self.tableFileName(for: DoublePinyin.layout(forSchema: schema))
             try layers.updateGenerated(.schema(schema)) { patch in
-                patch.removeAll { $0.key == Self.tableName }
+                patch.removeAll { $0.key == Self.tableName || $0.key == "aime_online" }
                 patch.append(.init(Self.tableName, .map([
                     .init("dictionary", ""), .init("user_dict", .string(String(file.dropLast(4)))), .init("db_class", "stabledb"),
                     .init("enable_completion", false), .init("enable_sentence", false),
-                    .init("initial_quality", 6), .init("comment_format", .list([])),
+                    .init("initial_quality", 0.5), .init("comment_format", .list([])),
                 ])))
                 let translator = ConfigValue.string("table_translator@\(Self.tableName)")
-                if !patch.contains(where: { $0.key == "engine/translators/+" && ($0.value.listValue ?? []).contains(translator) }) {
-                    let existing = patch.firstIndex { $0.key == "engine/translators/+" }
-                    if let existing {
-                        patch[existing].value = .list((patch[existing].value.listValue ?? []) + [translator])
-                    } else {
-                        patch.append(.init("engine/translators/+", .list([translator])))
-                    }
+                let legacyTranslator = ConfigValue.string("table_translator@aime_online")
+                let existing = patch.firstIndex { $0.key == "engine/translators/+" }
+                if let existing {
+                    var list = (patch[existing].value.listValue ?? []).filter { $0 != legacyTranslator && $0 != translator }
+                    list.append(translator)
+                    patch[existing].value = .list(list)
+                } else {
+                    patch.append(.init("engine/translators/+", .list([translator])))
                 }
             }
         }
@@ -539,7 +541,9 @@ public struct SubscriptionManager: Sendable {
         // The generated layer can be deleted by hand ("safe to delete"): re-mount if needed.
         let layers = ConfigLayers(paths: paths)
         let mounted = schemas.filter(Self.canMount).allSatisfy {
-            layers.generatedValue(.schema($0), keypath: Self.tableName) != nil
+            let table = layers.generatedValue(.schema($0), keypath: Self.tableName)
+            let hasLegacy = layers.generatedValue(.schema($0), keypath: "aime_online") != nil
+            return table?["initial_quality"] == 0.5 && !hasLegacy
         }
         if tablesExist, mounted, (try? String(contentsOf: signatureURL, encoding: .utf8)) == signature { return false }
         try rebuild(schemas: schemas)
