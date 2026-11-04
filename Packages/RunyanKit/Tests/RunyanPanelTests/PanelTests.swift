@@ -126,6 +126,24 @@ struct PanelTests {
         }
     }
 
+    /// Every shipped scheme must keep candidate numbers legible across themes and lighting conditions.
+    @Test func shippedSchemesHaveLegibleLabels() {
+        let darkSurface = ThemeColor(red: 0.1, green: 0.1, blue: 0.1)
+        for (id, _) in PanelTheme.schemeNames(in: Self.frontend) {
+            let theme = PanelTheme(frontend: Self.frontend, dark: false, schemeOverride: id)
+            let baseContrast = theme.labelColor.over(theme.backColor).contrast(with: theme.backColor)
+            #expect(baseContrast >= 4.0, "\(id) label base contrast \(baseContrast) is too low")
+
+            let hilitedContrast = theme.hilitedCandidateLabelColor.over(theme.hilitedCandidateBackColor).contrast(with: theme.hilitedCandidateBackColor)
+            #expect(hilitedContrast >= 3.0, "\(id) hilited label contrast \(hilitedContrast) is too low")
+
+            // On dark surfaces behind translucent panels, labels must remain legible.
+            let compositeBack = theme.effectiveBackColor.over(darkSurface)
+            let darkSurfaceContrast = theme.labelColor.over(compositeBack).contrast(with: compositeBack)
+            #expect(darkSurfaceContrast >= 3.0, "\(id) label dark surface contrast \(darkSurfaceContrast) is too low")
+        }
+    }
+
     @Test func tokenizesCandidateFormats() {
         #expect(CandidateView.tokenize("[label] [candidate] [comment]", dropComment: true) == ["[label]", " ", "[candidate]"])
         #expect(CandidateView.tokenize("[label]. [candidate] [comment]", dropComment: false) == ["[label]", ". ", "[candidate]", " ", "[comment]"])

@@ -68,6 +68,27 @@ public struct ThemeColor: Sendable, Hashable {
             blue: blue * alpha + background.blue * (1 - alpha)
         )
     }
+
+    /// Ensures minimum contrast against a background by blending toward `target`
+    /// (e.g. `candidateTextColor`), which has known good contrast with the background.
+    public func ensuringContrast(against background: ThemeColor, target: ThemeColor, minimum: Double = 3.2) -> ThemeColor {
+        if over(background).contrast(with: background) >= minimum { return self }
+        var best = self
+        for step in 1...10 {
+            let t = Double(step) / 10.0
+            let blended = ThemeColor(
+                red: red * (1 - t) + target.red * t,
+                green: green * (1 - t) + target.green * t,
+                blue: blue * (1 - t) + target.blue * t,
+                alpha: alpha
+            )
+            if blended.over(background).contrast(with: background) >= minimum {
+                return blended
+            }
+            best = blended
+        }
+        return best
+    }
 }
 
 /// Everything the candidate panel needs to render, resolved from `runyan.yaml`
@@ -192,15 +213,18 @@ public struct PanelTheme: Sendable, Hashable {
         hilitedTextColor = color("hilited_text_color", textColor)
         hilitedBackColor = color("hilited_back_color", .clear)
         candidateTextColor = color("candidate_text_color", textColor)
-        commentTextColor = color("comment_text_color", dark ? ThemeColor(red: 163/255, green: 163/255, blue: 160/255) : ThemeColor(red: 107/255, green: 106/255, blue: 103/255))
-        labelColor = color("label_color", commentTextColor)
+        commentTextColor = color("comment_text_color", dark ? ThemeColor(red: 163/255, green: 163/255, blue: 160/255) : ThemeColor(red: 92/255, green: 91/255, blue: 87/255))
+        let rawLabel = color("label_color", commentTextColor)
+        let baseBg = backColor.over(ThemeColor(red: 0.5, green: 0.5, blue: 0.5))
+        labelColor = rawLabel.ensuringContrast(against: baseBg, target: candidateTextColor, minimum: 3.2)
         // Older imported palettes use the shared highlight background for the
         // selected candidate. An explicit candidate color always takes precedence.
         hilitedCandidateBackColor = scheme["hilited_candidate_back_color"] == nil
             ? color("hilited_back_color", accent) : color("hilited_candidate_back_color", accent)
         hilitedCandidateTextColor = color("hilited_candidate_text_color", ThemeColor(red: 1, green: 1, blue: 1))
         hilitedCommentTextColor = color("hilited_comment_text_color", hilitedCandidateTextColor)
-        hilitedCandidateLabelColor = color("hilited_candidate_label_color", hilitedCommentTextColor)
+        let rawHilitedLabel = color("hilited_candidate_label_color", hilitedCommentTextColor)
+        hilitedCandidateLabelColor = rawHilitedLabel.ensuringContrast(against: hilitedCandidateBackColor.over(baseBg), target: hilitedCandidateTextColor, minimum: 3.0)
     }
 
     /// Panel background as drawn: dimmed for translucency and overall alpha.

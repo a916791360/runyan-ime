@@ -89,8 +89,8 @@ preset_color_schemes:
     hilited_text_color: 0xFF242321
     hilited_back_color: 0x14242321
     candidate_text_color: 0xFF242321
-    comment_text_color: 0xFF6B6A67
-    label_color: 0xFF8A8986
+    comment_text_color: 0xFF5C5B57
+    label_color: 0xFF5C5B57
     hilited_candidate_back_color: 0xFFB64032
     hilited_candidate_text_color: 0xFFFFFFFF
     hilited_comment_text_color: 0xE6FFFFFF
@@ -107,7 +107,7 @@ preset_color_schemes:
     hilited_back_color: 0x29FFFFFF
     candidate_text_color: 0xFFF2F2F0
     comment_text_color: 0xFFA3A3A0
-    label_color: 0xFF8E8E8B
+    label_color: 0xFFA3A3A0
     hilited_candidate_back_color: 0xFFC4503F
     hilited_candidate_text_color: 0xFFFFFFFF
     hilited_comment_text_color: 0xE6FFFFFF
@@ -122,8 +122,8 @@ preset_color_schemes:
     hilited_text_color: 0xFF1C1917
     hilited_back_color: 0x14000000
     candidate_text_color: 0xFF292524
-    comment_text_color: 0xFFA8A29E
-    label_color: 0xFFA8A29E
+    comment_text_color: 0xFF57534E
+    label_color: 0xFF57534E
     hilited_candidate_back_color: 0xFF292524
     hilited_candidate_text_color: 0xFFFAFAF9
     hilited_comment_text_color: 0xFFD6D3D1
@@ -139,8 +139,8 @@ preset_color_schemes:
     hilited_text_color: 0xFF1C1917
     hilited_back_color: 0x14000000
     candidate_text_color: 0xFF292524
-    comment_text_color: 0xFFA8A29E
-    label_color: 0xFFA8A29E
+    comment_text_color: 0xFF57534E
+    label_color: 0xFF57534E
     hilited_candidate_back_color: 0xFF2F6AF5
     hilited_candidate_text_color: 0xFFFFFFFF
     hilited_comment_text_color: 0xFFE8EEFF
@@ -155,8 +155,8 @@ preset_color_schemes:
     hilited_text_color: 0xFFE2E8F0
     hilited_back_color: 0x3338BDF8
     candidate_text_color: 0xFFE2E8F0
-    comment_text_color: 0xFF64748B
-    label_color: 0xFF64748B
+    comment_text_color: 0xFF94A3B8
+    label_color: 0xFF94A3B8
     hilited_candidate_back_color: 0xFF0EA5E9
     hilited_candidate_text_color: 0xFF0B1120
     hilited_comment_text_color: 0xFF0C4A6E
@@ -171,8 +171,8 @@ preset_color_schemes:
     hilited_text_color: 0xFF831843
     hilited_back_color: 0x1FEC4899
     candidate_text_color: 0xFF500724
-    comment_text_color: 0xFFF472B6
-    label_color: 0xFFF9A8D4
+    comment_text_color: 0xFF9D174D
+    label_color: 0xFF9D174D
     hilited_candidate_back_color: 0xFFEC4899
     hilited_candidate_text_color: 0xFFFFFFFF
     hilited_comment_text_color: 0xFFFCE7F3
@@ -187,8 +187,8 @@ preset_color_schemes:
     hilited_text_color: 0xFF365314
     hilited_back_color: 0x1F65A30D
     candidate_text_color: 0xFF1A2E05
-    comment_text_color: 0xFF84A36B
-    label_color: 0xFF9CB88A
+    comment_text_color: 0xFF4D7C0F
+    label_color: 0xFF3F6212
     hilited_candidate_back_color: 0xFF4D7C0F
     hilited_candidate_text_color: 0xFFF7FEE7
     hilited_comment_text_color: 0xFFD9F99D
@@ -204,7 +204,7 @@ preset_color_schemes:
     hilited_back_color: 0x3388C0D0
     candidate_text_color: 0xFFE5E9F0
     comment_text_color: 0xFF81A1C1
-    label_color: 0xFF81A1C1
+    label_color: 0xFF88C0D0
     hilited_candidate_back_color: 0xFF88C0D0
     hilited_candidate_text_color: 0xFF2E3440
     hilited_comment_text_color: 0xFF3B4252
@@ -219,8 +219,8 @@ preset_color_schemes:
     hilited_text_color: 0xFF1C1917
     hilited_back_color: 0x1A92400E
     candidate_text_color: 0xFF1C1917
-    comment_text_color: 0xFFA8A29E
-    label_color: 0xFFB45309
+    comment_text_color: 0xFF78716C
+    label_color: 0xFF92400E
     hilited_candidate_back_color: 0xFFB91C1C
     hilited_candidate_text_color: 0xFFFFFBEB
     hilited_comment_text_color: 0xFFFDE68A
